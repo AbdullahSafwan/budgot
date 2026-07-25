@@ -1,0 +1,8 @@
+# Compiled binary
+/budgot
+
+# Local env / secrets
+.env
+
+# Claude Code project notes
+CLAUDE.md
