@@ -1,0 +1,1 @@
+Budget Tracking App built using single binary + server-rendered frontend approach.
