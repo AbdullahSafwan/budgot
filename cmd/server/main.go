@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 
@@ -19,7 +20,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer db.Close()
 
+	if err := db.Schema.Create(context.Background()); err != nil {
+		log.Fatal("failed creating schema resources: ", err)
+	}
 	log.Println("Database migrated successfully")
 
 	r := router.NewRouter()
