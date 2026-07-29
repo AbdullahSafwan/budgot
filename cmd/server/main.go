@@ -7,7 +7,6 @@ import (
 	"github.com/joho/godotenv"
 
 	"budgot/internal/configs"
-	"budgot/internal/migrations"
 	"budgot/internal/router"
 )
 
@@ -18,10 +17,6 @@ func main() {
 
 	db, err := configs.NewDB()
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := migrations.Migrate(db); err != nil {
 		log.Fatal(err)
 	}
 
