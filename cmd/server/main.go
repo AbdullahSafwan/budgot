@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"log"
 	"net/http"
 
@@ -21,11 +20,6 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
-
-	if err := db.Schema.Create(context.Background()); err != nil {
-		log.Fatal("failed creating schema resources: ", err)
-	}
-	log.Println("Database migrated successfully")
 
 	r := router.NewRouter()
 	log.Println("Starting server on :8080")
