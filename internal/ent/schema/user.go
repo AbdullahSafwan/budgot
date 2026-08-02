@@ -15,14 +15,14 @@ type User struct {
 
 // Fields of the User.
 func (User) Fields() []ent.Field {
-	username := field.String("username").NotEmpty().Unique()
-	email := field.String("email").NotEmpty().Unique()
-	password_hash := field.String("password_hash").NotEmpty().Sensitive()
-	created_at := field.Time("created_at").Default(time.Now).Immutable()
-	updated_at := field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now)
-	is_active := field.Bool("is_active").Default(true)
-
-	return []ent.Field{username, email, password_hash, created_at, updated_at, is_active}
+	return []ent.Field{
+		field.String("username").NotEmpty().Unique(),
+		field.String("email").NotEmpty().Unique(),
+		field.String("password_hash").NotEmpty().Sensitive(),
+		field.Time("created_at").Default(time.Now).Immutable(),
+		field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now),
+		field.Bool("is_active").Default(true),
+	}
 }
 
 // Edges of the User.
