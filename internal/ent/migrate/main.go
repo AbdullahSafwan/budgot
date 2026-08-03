@@ -4,7 +4,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
@@ -13,8 +12,8 @@ import (
 	atlas "ariga.io/atlas/sql/migrate"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql/schema"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
+	_ "modernc.org/sqlite"
 )
 
 func main() {
@@ -29,7 +28,7 @@ func main() {
 	opts := []schema.MigrateOption{
 		schema.WithDir(dir),
 		schema.WithMigrationMode(schema.ModeReplay),
-		schema.WithDialect(dialect.MySQL),
+		schema.WithDialect(dialect.SQLite),
 		schema.WithFormatter(atlas.DefaultFormatter),
 	}
 
@@ -37,9 +36,7 @@ func main() {
 		log.Fatalln("migration name required: go run -mod=mod internal/ent/migrate/main.go <name>")
 	}
 
-	dsn := fmt.Sprintf("mysql://%s:%s@%s:%s/%s",
-		os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_NAME"))
+	dsn := "sqlite://file::memory:?cache=shared&_fk=1"
 
 	if err := migrate.NamedDiff(ctx, dsn, os.Args[1], opts...); err != nil {
 		log.Fatalf("failed generating migration file: %v", err)

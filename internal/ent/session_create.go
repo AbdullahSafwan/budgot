@@ -4,8 +4,11 @@ package ent
 
 import (
 	"budgot/internal/ent/session"
+	"budgot/internal/ent/user"
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -18,6 +21,69 @@ type SessionCreate struct {
 	hooks    []Hook
 }
 
+// SetExpiresAt sets the "expires_at" field.
+func (_c *SessionCreate) SetExpiresAt(v time.Time) *SessionCreate {
+	_c.mutation.SetExpiresAt(v)
+	return _c
+}
+
+// SetLastSeen sets the "last_seen" field.
+func (_c *SessionCreate) SetLastSeen(v time.Time) *SessionCreate {
+	_c.mutation.SetLastSeen(v)
+	return _c
+}
+
+// SetNillableLastSeen sets the "last_seen" field if the given value is not nil.
+func (_c *SessionCreate) SetNillableLastSeen(v *time.Time) *SessionCreate {
+	if v != nil {
+		_c.SetLastSeen(*v)
+	}
+	return _c
+}
+
+// SetIPAddress sets the "ip_address" field.
+func (_c *SessionCreate) SetIPAddress(v string) *SessionCreate {
+	_c.mutation.SetIPAddress(v)
+	return _c
+}
+
+// SetUserAgentHash sets the "user_agent_hash" field.
+func (_c *SessionCreate) SetUserAgentHash(v string) *SessionCreate {
+	_c.mutation.SetUserAgentHash(v)
+	return _c
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (_c *SessionCreate) SetCreatedAt(v time.Time) *SessionCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *SessionCreate) SetNillableCreatedAt(v *time.Time) *SessionCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetID sets the "id" field.
+func (_c *SessionCreate) SetID(v string) *SessionCreate {
+	_c.mutation.SetID(v)
+	return _c
+}
+
+// SetOwnerID sets the "owner" edge to the User entity by ID.
+func (_c *SessionCreate) SetOwnerID(id int) *SessionCreate {
+	_c.mutation.SetOwnerID(id)
+	return _c
+}
+
+// SetOwner sets the "owner" edge to the User entity.
+func (_c *SessionCreate) SetOwner(v *User) *SessionCreate {
+	return _c.SetOwnerID(v.ID)
+}
+
 // Mutation returns the SessionMutation object of the builder.
 func (_c *SessionCreate) Mutation() *SessionMutation {
 	return _c.mutation
@@ -25,6 +91,7 @@ func (_c *SessionCreate) Mutation() *SessionMutation {
 
 // Save creates the Session in the database.
 func (_c *SessionCreate) Save(ctx context.Context) (*Session, error) {
+	_c.defaults()
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -50,8 +117,53 @@ func (_c *SessionCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (_c *SessionCreate) defaults() {
+	if _, ok := _c.mutation.LastSeen(); !ok {
+		v := session.DefaultLastSeen()
+		_c.mutation.SetLastSeen(v)
+	}
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		v := session.DefaultCreatedAt()
+		_c.mutation.SetCreatedAt(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (_c *SessionCreate) check() error {
+	if _, ok := _c.mutation.ExpiresAt(); !ok {
+		return &ValidationError{Name: "expires_at", err: errors.New(`ent: missing required field "Session.expires_at"`)}
+	}
+	if _, ok := _c.mutation.LastSeen(); !ok {
+		return &ValidationError{Name: "last_seen", err: errors.New(`ent: missing required field "Session.last_seen"`)}
+	}
+	if _, ok := _c.mutation.IPAddress(); !ok {
+		return &ValidationError{Name: "ip_address", err: errors.New(`ent: missing required field "Session.ip_address"`)}
+	}
+	if v, ok := _c.mutation.IPAddress(); ok {
+		if err := session.IPAddressValidator(v); err != nil {
+			return &ValidationError{Name: "ip_address", err: fmt.Errorf(`ent: validator failed for field "Session.ip_address": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.UserAgentHash(); !ok {
+		return &ValidationError{Name: "user_agent_hash", err: errors.New(`ent: missing required field "Session.user_agent_hash"`)}
+	}
+	if v, ok := _c.mutation.UserAgentHash(); ok {
+		if err := session.UserAgentHashValidator(v); err != nil {
+			return &ValidationError{Name: "user_agent_hash", err: fmt.Errorf(`ent: validator failed for field "Session.user_agent_hash": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Session.created_at"`)}
+	}
+	if v, ok := _c.mutation.ID(); ok {
+		if err := session.IDValidator(v); err != nil {
+			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "Session.id": %w`, err)}
+		}
+	}
+	if len(_c.mutation.OwnerIDs()) == 0 {
+		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "Session.owner"`)}
+	}
 	return nil
 }
 
@@ -66,8 +178,13 @@ func (_c *SessionCreate) sqlSave(ctx context.Context) (*Session, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(string); ok {
+			_node.ID = id
+		} else {
+			return nil, fmt.Errorf("unexpected Session.ID type: %T", _spec.ID.Value)
+		}
+	}
 	_c.mutation.id = &_node.ID
 	_c.mutation.done = true
 	return _node, nil
@@ -76,8 +193,49 @@ func (_c *SessionCreate) sqlSave(ctx context.Context) (*Session, error) {
 func (_c *SessionCreate) createSpec() (*Session, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Session{config: _c.config}
-		_spec = sqlgraph.NewCreateSpec(session.Table, sqlgraph.NewFieldSpec(session.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(session.Table, sqlgraph.NewFieldSpec(session.FieldID, field.TypeString))
 	)
+	if id, ok := _c.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
+	if value, ok := _c.mutation.ExpiresAt(); ok {
+		_spec.SetField(session.FieldExpiresAt, field.TypeTime, value)
+		_node.ExpiresAt = value
+	}
+	if value, ok := _c.mutation.LastSeen(); ok {
+		_spec.SetField(session.FieldLastSeen, field.TypeTime, value)
+		_node.LastSeen = value
+	}
+	if value, ok := _c.mutation.IPAddress(); ok {
+		_spec.SetField(session.FieldIPAddress, field.TypeString, value)
+		_node.IPAddress = value
+	}
+	if value, ok := _c.mutation.UserAgentHash(); ok {
+		_spec.SetField(session.FieldUserAgentHash, field.TypeString, value)
+		_node.UserAgentHash = value
+	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(session.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if nodes := _c.mutation.OwnerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   session.OwnerTable,
+			Columns: []string{session.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.user_sessions = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
 }
 
@@ -99,6 +257,7 @@ func (_c *SessionCreateBulk) Save(ctx context.Context) ([]*Session, error) {
 	for i := range _c.builders {
 		func(i int, root context.Context) {
 			builder := _c.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*SessionMutation)
 				if !ok {
@@ -125,10 +284,6 @@ func (_c *SessionCreateBulk) Save(ctx context.Context) ([]*Session, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})

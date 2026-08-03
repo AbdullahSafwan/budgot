@@ -4,6 +4,7 @@ package ent
 
 import (
 	"budgot/internal/ent/schema"
+	"budgot/internal/ent/session"
 	"budgot/internal/ent/user"
 	"time"
 )
@@ -12,6 +13,28 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	sessionFields := schema.Session{}.Fields()
+	_ = sessionFields
+	// sessionDescLastSeen is the schema descriptor for last_seen field.
+	sessionDescLastSeen := sessionFields[2].Descriptor()
+	// session.DefaultLastSeen holds the default value on creation for the last_seen field.
+	session.DefaultLastSeen = sessionDescLastSeen.Default.(func() time.Time)
+	// sessionDescIPAddress is the schema descriptor for ip_address field.
+	sessionDescIPAddress := sessionFields[3].Descriptor()
+	// session.IPAddressValidator is a validator for the "ip_address" field. It is called by the builders before save.
+	session.IPAddressValidator = sessionDescIPAddress.Validators[0].(func(string) error)
+	// sessionDescUserAgentHash is the schema descriptor for user_agent_hash field.
+	sessionDescUserAgentHash := sessionFields[4].Descriptor()
+	// session.UserAgentHashValidator is a validator for the "user_agent_hash" field. It is called by the builders before save.
+	session.UserAgentHashValidator = sessionDescUserAgentHash.Validators[0].(func(string) error)
+	// sessionDescCreatedAt is the schema descriptor for created_at field.
+	sessionDescCreatedAt := sessionFields[5].Descriptor()
+	// session.DefaultCreatedAt holds the default value on creation for the created_at field.
+	session.DefaultCreatedAt = sessionDescCreatedAt.Default.(func() time.Time)
+	// sessionDescID is the schema descriptor for id field.
+	sessionDescID := sessionFields[0].Descriptor()
+	// session.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	session.IDValidator = sessionDescID.Validators[0].(func(string) error)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescUsername is the schema descriptor for username field.

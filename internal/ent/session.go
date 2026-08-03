@@ -4,8 +4,10 @@ package ent
 
 import (
 	"budgot/internal/ent/session"
+	"budgot/internal/ent/user"
 	"fmt"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -13,10 +15,44 @@ import (
 
 // Session is the model entity for the Session schema.
 type Session struct {
-	config
+	config `json:"-"`
 	// ID of the ent.
-	ID           int `json:"id,omitempty"`
-	selectValues sql.SelectValues
+	ID string `json:"id,omitempty"`
+	// ExpiresAt holds the value of the "expires_at" field.
+	ExpiresAt time.Time `json:"expires_at,omitempty"`
+	// LastSeen holds the value of the "last_seen" field.
+	LastSeen time.Time `json:"last_seen,omitempty"`
+	// IPAddress holds the value of the "ip_address" field.
+	IPAddress string `json:"ip_address,omitempty"`
+	// UserAgentHash holds the value of the "user_agent_hash" field.
+	UserAgentHash string `json:"user_agent_hash,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the SessionQuery when eager-loading is set.
+	Edges         SessionEdges `json:"edges"`
+	user_sessions *int
+	selectValues  sql.SelectValues
+}
+
+// SessionEdges holds the relations/edges for other nodes in the graph.
+type SessionEdges struct {
+	// Owner holds the value of the owner edge.
+	Owner *User `json:"owner,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// OwnerOrErr returns the Owner value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e SessionEdges) OwnerOrErr() (*User, error) {
+	if e.Owner != nil {
+		return e.Owner, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: user.Label}
+	}
+	return nil, &NotLoadedError{edge: "owner"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -24,7 +60,11 @@ func (*Session) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case session.FieldID:
+		case session.FieldID, session.FieldIPAddress, session.FieldUserAgentHash:
+			values[i] = new(sql.NullString)
+		case session.FieldExpiresAt, session.FieldLastSeen, session.FieldCreatedAt:
+			values[i] = new(sql.NullTime)
+		case session.ForeignKeys[0]: // user_sessions
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -42,11 +82,48 @@ func (_m *Session) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case session.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value.Valid {
+				_m.ID = value.String
 			}
-			_m.ID = int(value.Int64)
+		case session.FieldExpiresAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field expires_at", values[i])
+			} else if value.Valid {
+				_m.ExpiresAt = value.Time
+			}
+		case session.FieldLastSeen:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field last_seen", values[i])
+			} else if value.Valid {
+				_m.LastSeen = value.Time
+			}
+		case session.FieldIPAddress:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field ip_address", values[i])
+			} else if value.Valid {
+				_m.IPAddress = value.String
+			}
+		case session.FieldUserAgentHash:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field user_agent_hash", values[i])
+			} else if value.Valid {
+				_m.UserAgentHash = value.String
+			}
+		case session.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
+			} else if value.Valid {
+				_m.CreatedAt = value.Time
+			}
+		case session.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field user_sessions", value)
+			} else if value.Valid {
+				_m.user_sessions = new(int)
+				*_m.user_sessions = int(value.Int64)
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -58,6 +135,11 @@ func (_m *Session) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (_m *Session) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
+}
+
+// QueryOwner queries the "owner" edge of the Session entity.
+func (_m *Session) QueryOwner() *UserQuery {
+	return NewSessionClient(_m.config).QueryOwner(_m)
 }
 
 // Update returns a builder for updating this Session.
@@ -82,7 +164,21 @@ func (_m *Session) Unwrap() *Session {
 func (_m *Session) String() string {
 	var builder strings.Builder
 	builder.WriteString("Session(")
-	builder.WriteString(fmt.Sprintf("id=%v", _m.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("expires_at=")
+	builder.WriteString(_m.ExpiresAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("last_seen=")
+	builder.WriteString(_m.LastSeen.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("ip_address=")
+	builder.WriteString(_m.IPAddress)
+	builder.WriteString(", ")
+	builder.WriteString("user_agent_hash=")
+	builder.WriteString(_m.UserAgentHash)
+	builder.WriteString(", ")
+	builder.WriteString("created_at=")
+	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

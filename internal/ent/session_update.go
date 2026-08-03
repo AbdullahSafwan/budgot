@@ -5,9 +5,11 @@ package ent
 import (
 	"budgot/internal/ent/predicate"
 	"budgot/internal/ent/session"
+	"budgot/internal/ent/user"
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -27,9 +29,68 @@ func (_u *SessionUpdate) Where(ps ...predicate.Session) *SessionUpdate {
 	return _u
 }
 
+// SetLastSeen sets the "last_seen" field.
+func (_u *SessionUpdate) SetLastSeen(v time.Time) *SessionUpdate {
+	_u.mutation.SetLastSeen(v)
+	return _u
+}
+
+// SetNillableLastSeen sets the "last_seen" field if the given value is not nil.
+func (_u *SessionUpdate) SetNillableLastSeen(v *time.Time) *SessionUpdate {
+	if v != nil {
+		_u.SetLastSeen(*v)
+	}
+	return _u
+}
+
+// SetIPAddress sets the "ip_address" field.
+func (_u *SessionUpdate) SetIPAddress(v string) *SessionUpdate {
+	_u.mutation.SetIPAddress(v)
+	return _u
+}
+
+// SetNillableIPAddress sets the "ip_address" field if the given value is not nil.
+func (_u *SessionUpdate) SetNillableIPAddress(v *string) *SessionUpdate {
+	if v != nil {
+		_u.SetIPAddress(*v)
+	}
+	return _u
+}
+
+// SetUserAgentHash sets the "user_agent_hash" field.
+func (_u *SessionUpdate) SetUserAgentHash(v string) *SessionUpdate {
+	_u.mutation.SetUserAgentHash(v)
+	return _u
+}
+
+// SetNillableUserAgentHash sets the "user_agent_hash" field if the given value is not nil.
+func (_u *SessionUpdate) SetNillableUserAgentHash(v *string) *SessionUpdate {
+	if v != nil {
+		_u.SetUserAgentHash(*v)
+	}
+	return _u
+}
+
+// SetOwnerID sets the "owner" edge to the User entity by ID.
+func (_u *SessionUpdate) SetOwnerID(id int) *SessionUpdate {
+	_u.mutation.SetOwnerID(id)
+	return _u
+}
+
+// SetOwner sets the "owner" edge to the User entity.
+func (_u *SessionUpdate) SetOwner(v *User) *SessionUpdate {
+	return _u.SetOwnerID(v.ID)
+}
+
 // Mutation returns the SessionMutation object of the builder.
 func (_u *SessionUpdate) Mutation() *SessionMutation {
 	return _u.mutation
+}
+
+// ClearOwner clears the "owner" edge to the User entity.
+func (_u *SessionUpdate) ClearOwner() *SessionUpdate {
+	_u.mutation.ClearOwner()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -59,14 +120,73 @@ func (_u *SessionUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (_u *SessionUpdate) check() error {
+	if v, ok := _u.mutation.IPAddress(); ok {
+		if err := session.IPAddressValidator(v); err != nil {
+			return &ValidationError{Name: "ip_address", err: fmt.Errorf(`ent: validator failed for field "Session.ip_address": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.UserAgentHash(); ok {
+		if err := session.UserAgentHashValidator(v); err != nil {
+			return &ValidationError{Name: "user_agent_hash", err: fmt.Errorf(`ent: validator failed for field "Session.user_agent_hash": %w`, err)}
+		}
+	}
+	if _u.mutation.OwnerCleared() && len(_u.mutation.OwnerIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Session.owner"`)
+	}
+	return nil
+}
+
 func (_u *SessionUpdate) sqlSave(ctx context.Context) (_node int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(session.Table, session.Columns, sqlgraph.NewFieldSpec(session.FieldID, field.TypeInt))
+	if err := _u.check(); err != nil {
+		return _node, err
+	}
+	_spec := sqlgraph.NewUpdateSpec(session.Table, session.Columns, sqlgraph.NewFieldSpec(session.FieldID, field.TypeString))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.LastSeen(); ok {
+		_spec.SetField(session.FieldLastSeen, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.IPAddress(); ok {
+		_spec.SetField(session.FieldIPAddress, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.UserAgentHash(); ok {
+		_spec.SetField(session.FieldUserAgentHash, field.TypeString, value)
+	}
+	if _u.mutation.OwnerCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   session.OwnerTable,
+			Columns: []string{session.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.OwnerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   session.OwnerTable,
+			Columns: []string{session.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -88,9 +208,68 @@ type SessionUpdateOne struct {
 	mutation *SessionMutation
 }
 
+// SetLastSeen sets the "last_seen" field.
+func (_u *SessionUpdateOne) SetLastSeen(v time.Time) *SessionUpdateOne {
+	_u.mutation.SetLastSeen(v)
+	return _u
+}
+
+// SetNillableLastSeen sets the "last_seen" field if the given value is not nil.
+func (_u *SessionUpdateOne) SetNillableLastSeen(v *time.Time) *SessionUpdateOne {
+	if v != nil {
+		_u.SetLastSeen(*v)
+	}
+	return _u
+}
+
+// SetIPAddress sets the "ip_address" field.
+func (_u *SessionUpdateOne) SetIPAddress(v string) *SessionUpdateOne {
+	_u.mutation.SetIPAddress(v)
+	return _u
+}
+
+// SetNillableIPAddress sets the "ip_address" field if the given value is not nil.
+func (_u *SessionUpdateOne) SetNillableIPAddress(v *string) *SessionUpdateOne {
+	if v != nil {
+		_u.SetIPAddress(*v)
+	}
+	return _u
+}
+
+// SetUserAgentHash sets the "user_agent_hash" field.
+func (_u *SessionUpdateOne) SetUserAgentHash(v string) *SessionUpdateOne {
+	_u.mutation.SetUserAgentHash(v)
+	return _u
+}
+
+// SetNillableUserAgentHash sets the "user_agent_hash" field if the given value is not nil.
+func (_u *SessionUpdateOne) SetNillableUserAgentHash(v *string) *SessionUpdateOne {
+	if v != nil {
+		_u.SetUserAgentHash(*v)
+	}
+	return _u
+}
+
+// SetOwnerID sets the "owner" edge to the User entity by ID.
+func (_u *SessionUpdateOne) SetOwnerID(id int) *SessionUpdateOne {
+	_u.mutation.SetOwnerID(id)
+	return _u
+}
+
+// SetOwner sets the "owner" edge to the User entity.
+func (_u *SessionUpdateOne) SetOwner(v *User) *SessionUpdateOne {
+	return _u.SetOwnerID(v.ID)
+}
+
 // Mutation returns the SessionMutation object of the builder.
 func (_u *SessionUpdateOne) Mutation() *SessionMutation {
 	return _u.mutation
+}
+
+// ClearOwner clears the "owner" edge to the User entity.
+func (_u *SessionUpdateOne) ClearOwner() *SessionUpdateOne {
+	_u.mutation.ClearOwner()
+	return _u
 }
 
 // Where appends a list predicates to the SessionUpdate builder.
@@ -133,8 +312,29 @@ func (_u *SessionUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (_u *SessionUpdateOne) check() error {
+	if v, ok := _u.mutation.IPAddress(); ok {
+		if err := session.IPAddressValidator(v); err != nil {
+			return &ValidationError{Name: "ip_address", err: fmt.Errorf(`ent: validator failed for field "Session.ip_address": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.UserAgentHash(); ok {
+		if err := session.UserAgentHashValidator(v); err != nil {
+			return &ValidationError{Name: "user_agent_hash", err: fmt.Errorf(`ent: validator failed for field "Session.user_agent_hash": %w`, err)}
+		}
+	}
+	if _u.mutation.OwnerCleared() && len(_u.mutation.OwnerIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Session.owner"`)
+	}
+	return nil
+}
+
 func (_u *SessionUpdateOne) sqlSave(ctx context.Context) (_node *Session, err error) {
-	_spec := sqlgraph.NewUpdateSpec(session.Table, session.Columns, sqlgraph.NewFieldSpec(session.FieldID, field.TypeInt))
+	if err := _u.check(); err != nil {
+		return _node, err
+	}
+	_spec := sqlgraph.NewUpdateSpec(session.Table, session.Columns, sqlgraph.NewFieldSpec(session.FieldID, field.TypeString))
 	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Session.id" for update`)}
@@ -158,6 +358,44 @@ func (_u *SessionUpdateOne) sqlSave(ctx context.Context) (_node *Session, err er
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.LastSeen(); ok {
+		_spec.SetField(session.FieldLastSeen, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.IPAddress(); ok {
+		_spec.SetField(session.FieldIPAddress, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.UserAgentHash(); ok {
+		_spec.SetField(session.FieldUserAgentHash, field.TypeString, value)
+	}
+	if _u.mutation.OwnerCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   session.OwnerTable,
+			Columns: []string{session.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.OwnerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   session.OwnerTable,
+			Columns: []string{session.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Session{config: _u.config}
 	_spec.Assign = _node.assignValues

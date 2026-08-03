@@ -17,6 +17,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // Client is the client that holds all ent builders.
@@ -268,7 +269,7 @@ func (c *SessionClient) UpdateOne(_m *Session) *SessionUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *SessionClient) UpdateOneID(id int) *SessionUpdateOne {
+func (c *SessionClient) UpdateOneID(id string) *SessionUpdateOne {
 	mutation := newSessionMutation(c.config, OpUpdateOne, withSessionID(id))
 	return &SessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -285,7 +286,7 @@ func (c *SessionClient) DeleteOne(_m *Session) *SessionDeleteOne {
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *SessionClient) DeleteOneID(id int) *SessionDeleteOne {
+func (c *SessionClient) DeleteOneID(id string) *SessionDeleteOne {
 	builder := c.Delete().Where(session.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -302,17 +303,33 @@ func (c *SessionClient) Query() *SessionQuery {
 }
 
 // Get returns a Session entity by its id.
-func (c *SessionClient) Get(ctx context.Context, id int) (*Session, error) {
+func (c *SessionClient) Get(ctx context.Context, id string) (*Session, error) {
 	return c.Query().Where(session.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *SessionClient) GetX(ctx context.Context, id int) *Session {
+func (c *SessionClient) GetX(ctx context.Context, id string) *Session {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryOwner queries the owner edge of a Session.
+func (c *SessionClient) QueryOwner(_m *Session) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(session.Table, session.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, session.OwnerTable, session.OwnerColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // Hooks returns the client hooks.
@@ -446,6 +463,22 @@ func (c *UserClient) GetX(ctx context.Context, id int) *User {
 		panic(err)
 	}
 	return obj
+}
+
+// QuerySessions queries the sessions edge of a User.
+func (c *UserClient) QuerySessions(_m *User) *SessionQuery {
+	query := (&SessionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(session.Table, session.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.SessionsTable, user.SessionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // Hooks returns the client hooks.

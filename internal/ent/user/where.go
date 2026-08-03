@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // ID filters vertices based on their ID field.
@@ -367,6 +368,29 @@ func IsActiveEQ(v bool) predicate.User {
 // IsActiveNEQ applies the NEQ predicate on the "is_active" field.
 func IsActiveNEQ(v bool) predicate.User {
 	return predicate.User(sql.FieldNEQ(FieldIsActive, v))
+}
+
+// HasSessions applies the HasEdge predicate on the "sessions" edge.
+func HasSessions() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, SessionsTable, SessionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSessionsWith applies the HasEdge predicate on the "sessions" edge with a given conditions (other predicates).
+func HasSessionsWith(preds ...predicate.Session) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newSessionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.
