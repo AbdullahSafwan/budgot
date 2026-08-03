@@ -7,5 +7,5 @@ import (
 )
 
 func NewDB() (*ent.Client, error) {
-	return ent.Open("sqlite3", "file:budgot.db?_fk=1&cache=shared")
+	return ent.Open("sqlite", "file:budgot.db?_fk=1&cache=shared")
 }

@@ -36,7 +36,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "session" package.
 	SessionsInverseTable = "sessions"
 	// SessionsColumn is the table column denoting the sessions relation/edge.
-	SessionsColumn = "user_sessions"
+	SessionsColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.

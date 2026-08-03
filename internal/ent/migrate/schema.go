@@ -16,7 +16,7 @@ var (
 		{Name: "ip_address", Type: field.TypeString},
 		{Name: "user_agent_hash", Type: field.TypeString},
 		{Name: "created_at", Type: field.TypeTime},
-		{Name: "user_sessions", Type: field.TypeInt},
+		{Name: "user_id", Type: field.TypeInt},
 	}
 	// SessionsTable holds the schema information for the "sessions" table.
 	SessionsTable = &schema.Table{
@@ -28,7 +28,7 @@ var (
 				Symbol:     "sessions_users_sessions",
 				Columns:    []*schema.Column{SessionsColumns[6]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}
