@@ -7,7 +7,6 @@ import (
 	"github.com/joho/godotenv"
 
 	"budgot/internal/configs"
-	"budgot/internal/migrations"
 	"budgot/internal/router"
 )
 
@@ -20,12 +19,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	if err := migrations.Migrate(db); err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println("Database migrated successfully")
+	defer db.Close()
 
 	r := router.NewRouter()
 	log.Println("Starting server on :8080")
