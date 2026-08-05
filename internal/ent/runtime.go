@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"budgot/internal/ent/loginattempt"
 	"budgot/internal/ent/schema"
 	"budgot/internal/ent/session"
 	"budgot/internal/ent/user"
@@ -13,6 +14,16 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	loginattemptFields := schema.LoginAttempt{}.Fields()
+	_ = loginattemptFields
+	// loginattemptDescIPAddress is the schema descriptor for ip_address field.
+	loginattemptDescIPAddress := loginattemptFields[1].Descriptor()
+	// loginattempt.IPAddressValidator is a validator for the "ip_address" field. It is called by the builders before save.
+	loginattempt.IPAddressValidator = loginattemptDescIPAddress.Validators[0].(func(string) error)
+	// loginattemptDescAttemptedAt is the schema descriptor for attempted_at field.
+	loginattemptDescAttemptedAt := loginattemptFields[3].Descriptor()
+	// loginattempt.DefaultAttemptedAt holds the default value on creation for the attempted_at field.
+	loginattempt.DefaultAttemptedAt = loginattemptDescAttemptedAt.Default.(func() time.Time)
 	sessionFields := schema.Session{}.Fields()
 	_ = sessionFields
 	// sessionDescLastSeen is the schema descriptor for last_seen field.

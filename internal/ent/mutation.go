@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"budgot/internal/ent/loginattempt"
 	"budgot/internal/ent/predicate"
 	"budgot/internal/ent/session"
 	"budgot/internal/ent/user"
@@ -25,9 +26,520 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeSession = "Session"
-	TypeUser    = "User"
+	TypeLoginAttempt = "LoginAttempt"
+	TypeSession      = "Session"
+	TypeUser         = "User"
 )
+
+// LoginAttemptMutation represents an operation that mutates the LoginAttempt nodes in the graph.
+type LoginAttemptMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	username      *string
+	ip_address    *string
+	success       *bool
+	attempted_at  *time.Time
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*LoginAttempt, error)
+	predicates    []predicate.LoginAttempt
+}
+
+var _ ent.Mutation = (*LoginAttemptMutation)(nil)
+
+// loginattemptOption allows management of the mutation configuration using functional options.
+type loginattemptOption func(*LoginAttemptMutation)
+
+// newLoginAttemptMutation creates new mutation for the LoginAttempt entity.
+func newLoginAttemptMutation(c config, op Op, opts ...loginattemptOption) *LoginAttemptMutation {
+	m := &LoginAttemptMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeLoginAttempt,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withLoginAttemptID sets the ID field of the mutation.
+func withLoginAttemptID(id int) loginattemptOption {
+	return func(m *LoginAttemptMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *LoginAttempt
+		)
+		m.oldValue = func(ctx context.Context) (*LoginAttempt, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().LoginAttempt.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withLoginAttempt sets the old LoginAttempt of the mutation.
+func withLoginAttempt(node *LoginAttempt) loginattemptOption {
+	return func(m *LoginAttemptMutation) {
+		m.oldValue = func(context.Context) (*LoginAttempt, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m LoginAttemptMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m LoginAttemptMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *LoginAttemptMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *LoginAttemptMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().LoginAttempt.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetUsername sets the "username" field.
+func (m *LoginAttemptMutation) SetUsername(s string) {
+	m.username = &s
+}
+
+// Username returns the value of the "username" field in the mutation.
+func (m *LoginAttemptMutation) Username() (r string, exists bool) {
+	v := m.username
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUsername returns the old "username" field's value of the LoginAttempt entity.
+// If the LoginAttempt object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LoginAttemptMutation) OldUsername(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUsername is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUsername requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUsername: %w", err)
+	}
+	return oldValue.Username, nil
+}
+
+// ClearUsername clears the value of the "username" field.
+func (m *LoginAttemptMutation) ClearUsername() {
+	m.username = nil
+	m.clearedFields[loginattempt.FieldUsername] = struct{}{}
+}
+
+// UsernameCleared returns if the "username" field was cleared in this mutation.
+func (m *LoginAttemptMutation) UsernameCleared() bool {
+	_, ok := m.clearedFields[loginattempt.FieldUsername]
+	return ok
+}
+
+// ResetUsername resets all changes to the "username" field.
+func (m *LoginAttemptMutation) ResetUsername() {
+	m.username = nil
+	delete(m.clearedFields, loginattempt.FieldUsername)
+}
+
+// SetIPAddress sets the "ip_address" field.
+func (m *LoginAttemptMutation) SetIPAddress(s string) {
+	m.ip_address = &s
+}
+
+// IPAddress returns the value of the "ip_address" field in the mutation.
+func (m *LoginAttemptMutation) IPAddress() (r string, exists bool) {
+	v := m.ip_address
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIPAddress returns the old "ip_address" field's value of the LoginAttempt entity.
+// If the LoginAttempt object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LoginAttemptMutation) OldIPAddress(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIPAddress is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIPAddress requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIPAddress: %w", err)
+	}
+	return oldValue.IPAddress, nil
+}
+
+// ResetIPAddress resets all changes to the "ip_address" field.
+func (m *LoginAttemptMutation) ResetIPAddress() {
+	m.ip_address = nil
+}
+
+// SetSuccess sets the "success" field.
+func (m *LoginAttemptMutation) SetSuccess(b bool) {
+	m.success = &b
+}
+
+// Success returns the value of the "success" field in the mutation.
+func (m *LoginAttemptMutation) Success() (r bool, exists bool) {
+	v := m.success
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSuccess returns the old "success" field's value of the LoginAttempt entity.
+// If the LoginAttempt object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LoginAttemptMutation) OldSuccess(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSuccess is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSuccess requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSuccess: %w", err)
+	}
+	return oldValue.Success, nil
+}
+
+// ResetSuccess resets all changes to the "success" field.
+func (m *LoginAttemptMutation) ResetSuccess() {
+	m.success = nil
+}
+
+// SetAttemptedAt sets the "attempted_at" field.
+func (m *LoginAttemptMutation) SetAttemptedAt(t time.Time) {
+	m.attempted_at = &t
+}
+
+// AttemptedAt returns the value of the "attempted_at" field in the mutation.
+func (m *LoginAttemptMutation) AttemptedAt() (r time.Time, exists bool) {
+	v := m.attempted_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAttemptedAt returns the old "attempted_at" field's value of the LoginAttempt entity.
+// If the LoginAttempt object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LoginAttemptMutation) OldAttemptedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAttemptedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAttemptedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAttemptedAt: %w", err)
+	}
+	return oldValue.AttemptedAt, nil
+}
+
+// ResetAttemptedAt resets all changes to the "attempted_at" field.
+func (m *LoginAttemptMutation) ResetAttemptedAt() {
+	m.attempted_at = nil
+}
+
+// Where appends a list predicates to the LoginAttemptMutation builder.
+func (m *LoginAttemptMutation) Where(ps ...predicate.LoginAttempt) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the LoginAttemptMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *LoginAttemptMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.LoginAttempt, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *LoginAttemptMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *LoginAttemptMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (LoginAttempt).
+func (m *LoginAttemptMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *LoginAttemptMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.username != nil {
+		fields = append(fields, loginattempt.FieldUsername)
+	}
+	if m.ip_address != nil {
+		fields = append(fields, loginattempt.FieldIPAddress)
+	}
+	if m.success != nil {
+		fields = append(fields, loginattempt.FieldSuccess)
+	}
+	if m.attempted_at != nil {
+		fields = append(fields, loginattempt.FieldAttemptedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *LoginAttemptMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case loginattempt.FieldUsername:
+		return m.Username()
+	case loginattempt.FieldIPAddress:
+		return m.IPAddress()
+	case loginattempt.FieldSuccess:
+		return m.Success()
+	case loginattempt.FieldAttemptedAt:
+		return m.AttemptedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *LoginAttemptMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case loginattempt.FieldUsername:
+		return m.OldUsername(ctx)
+	case loginattempt.FieldIPAddress:
+		return m.OldIPAddress(ctx)
+	case loginattempt.FieldSuccess:
+		return m.OldSuccess(ctx)
+	case loginattempt.FieldAttemptedAt:
+		return m.OldAttemptedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown LoginAttempt field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *LoginAttemptMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case loginattempt.FieldUsername:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUsername(v)
+		return nil
+	case loginattempt.FieldIPAddress:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIPAddress(v)
+		return nil
+	case loginattempt.FieldSuccess:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSuccess(v)
+		return nil
+	case loginattempt.FieldAttemptedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAttemptedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown LoginAttempt field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *LoginAttemptMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *LoginAttemptMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *LoginAttemptMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown LoginAttempt numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *LoginAttemptMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(loginattempt.FieldUsername) {
+		fields = append(fields, loginattempt.FieldUsername)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *LoginAttemptMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *LoginAttemptMutation) ClearField(name string) error {
+	switch name {
+	case loginattempt.FieldUsername:
+		m.ClearUsername()
+		return nil
+	}
+	return fmt.Errorf("unknown LoginAttempt nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *LoginAttemptMutation) ResetField(name string) error {
+	switch name {
+	case loginattempt.FieldUsername:
+		m.ResetUsername()
+		return nil
+	case loginattempt.FieldIPAddress:
+		m.ResetIPAddress()
+		return nil
+	case loginattempt.FieldSuccess:
+		m.ResetSuccess()
+		return nil
+	case loginattempt.FieldAttemptedAt:
+		m.ResetAttemptedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown LoginAttempt field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *LoginAttemptMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *LoginAttemptMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *LoginAttemptMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *LoginAttemptMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *LoginAttemptMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *LoginAttemptMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *LoginAttemptMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown LoginAttempt unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *LoginAttemptMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown LoginAttempt edge %s", name)
+}
 
 // SessionMutation represents an operation that mutates the Session nodes in the graph.
 type SessionMutation struct {

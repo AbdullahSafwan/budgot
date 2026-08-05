@@ -8,6 +8,20 @@ import (
 )
 
 var (
+	// LoginAttemptsColumns holds the columns for the "login_attempts" table.
+	LoginAttemptsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "username", Type: field.TypeString, Nullable: true},
+		{Name: "ip_address", Type: field.TypeString},
+		{Name: "success", Type: field.TypeBool},
+		{Name: "attempted_at", Type: field.TypeTime},
+	}
+	// LoginAttemptsTable holds the schema information for the "login_attempts" table.
+	LoginAttemptsTable = &schema.Table{
+		Name:       "login_attempts",
+		Columns:    LoginAttemptsColumns,
+		PrimaryKey: []*schema.Column{LoginAttemptsColumns[0]},
+	}
 	// SessionsColumns holds the columns for the "sessions" table.
 	SessionsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString},
@@ -50,6 +64,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		LoginAttemptsTable,
 		SessionsTable,
 		UsersTable,
 	}

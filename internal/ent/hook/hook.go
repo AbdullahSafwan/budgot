@@ -8,6 +8,18 @@ import (
 	"fmt"
 )
 
+// The LoginAttemptFunc type is an adapter to allow the use of ordinary
+// function as LoginAttempt mutator.
+type LoginAttemptFunc func(context.Context, *ent.LoginAttemptMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f LoginAttemptFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.LoginAttemptMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.LoginAttemptMutation", m)
+}
+
 // The SessionFunc type is an adapter to allow the use of ordinary
 // function as Session mutator.
 type SessionFunc func(context.Context, *ent.SessionMutation) (ent.Value, error)
