@@ -1,6 +1,9 @@
 # Compiled binary
 /budgot
 
+# SQLite database
+budgot.db
+
 # Local env / secrets
 .env
 
