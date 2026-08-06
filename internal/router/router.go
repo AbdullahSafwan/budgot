@@ -2,19 +2,28 @@ package router
 
 import (
 	"net/http"
+	"time"
 
 	"budgot/internal/controllers"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+
+	"github.com/go-chi/httprate"
 )
 
 func NewRouter() *chi.Mux {
 	router := chi.NewRouter()
+	router.Use(middleware.ClientIPFromXFFTrustedProxies(1))
 
-	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	loginLimiter := httprate.LimitBy(5, time.Minute, func(r *http.Request) (string, error) {
+		return httprate.CanonicalizeIP(middleware.GetClientIP(r.Context())), nil
+	})
+
+	router.With(loginLimiter).Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Welcome to the Budgot API!"))
 	})
 
-	router.Post("/login", controllers.LoginHandler)
+	router.With(loginLimiter).Post("/login", controllers.LoginHandler)
 	return router
 }
