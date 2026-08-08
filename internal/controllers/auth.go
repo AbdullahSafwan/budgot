@@ -7,20 +7,19 @@ import (
 	"net/http"
 	"time"
 
-	"budgot/internal/ent"
-	"budgot/internal/ent/user"
+	"budgot/internal/repository"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 var dummyHash, _ = bcrypt.GenerateFromPassword([]byte("fixed-dummy-value-for-timing-safety"), 12)
 
-func LoginHandler(db *ent.Client) http.HandlerFunc {
+func LoginHandler(users *repository.UserRepository, sessions *repository.SessionRepository, attempts *repository.LoginAttemptRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		username := r.FormValue("username")
 		password := r.FormValue("password")
 
-		u, err := db.User.Query().Where(user.UsernameEQ(username)).Only(r.Context())
+		u, err := users.FindByUsername(r.Context(), username)
 		if err != nil {
 			bcrypt.CompareHashAndPassword(dummyHash, []byte(password))
 			http.Error(w, "invalid username or password", http.StatusUnauthorized)
@@ -42,14 +41,17 @@ func LoginHandler(db *ent.Client) http.HandlerFunc {
 		sessionID := hex.EncodeToString(sum[:])
 
 		now := time.Now()
-		_, err = db.Session.Create().
-			SetID(sessionID).
-			SetOwnerID(u.ID).
-			SetExpiresAt(now.Add(7 * 24 * time.Hour)).
-			SetLastSeen(now).
-			SetIPAddress(r.RemoteAddr).
-			SetUserAgentHash(hashUserAgent(r.UserAgent())).
-			Save(r.Context())
+
+		sessionParams := repository.CreateSessionParams{
+			ID:            sessionID,
+			OwnerID:       u.ID,
+			ExpiresAt:     now.Add(7 * 24 * time.Hour),
+			LastSeen:      now,
+			IPAddress:     r.RemoteAddr,
+			UserAgentHash: hashUserAgent(r.UserAgent()),
+		}
+
+		_, err = sessions.Create(r.Context(), sessionParams)
 		if err != nil {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
@@ -65,6 +67,7 @@ func LoginHandler(db *ent.Client) http.HandlerFunc {
 			Expires:  now.Add(7 * 24 * time.Hour),
 		})
 
+		attempts.Record(r.Context(), username, r.RemoteAddr, true)
 		w.Write([]byte("login successful"))
 	}
 }

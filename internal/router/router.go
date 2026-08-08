@@ -6,6 +6,7 @@ import (
 
 	"budgot/internal/controllers"
 	"budgot/internal/ent"
+	"budgot/internal/repository"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -25,6 +26,10 @@ func NewRouter(db *ent.Client) *chi.Mux {
 		w.Write([]byte("Welcome to the Budgot API!"))
 	})
 
-	router.With(loginLimiter).Post("/login", controllers.LoginHandler(db))
+	users := repository.NewUserRepository(db)
+	sessions := repository.NewSessionRepository(db)
+	attempts := repository.NewLoginAttemptRepository(db)
+
+	router.With(loginLimiter).Post("/login", controllers.LoginHandler(users, sessions, attempts))
 	return router
 }
