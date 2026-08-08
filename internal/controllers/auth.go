@@ -22,11 +22,13 @@ func LoginHandler(users *repository.UserRepository, sessions *repository.Session
 		u, err := users.FindByUsername(r.Context(), username)
 		if err != nil {
 			bcrypt.CompareHashAndPassword(dummyHash, []byte(password))
+			attempts.Record(r.Context(), username, r.RemoteAddr, false)
 			http.Error(w, "invalid username or password", http.StatusUnauthorized)
 			return
 		}
 
 		if err := bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password)); err != nil {
+			attempts.Record(r.Context(), username, r.RemoteAddr, false)
 			http.Error(w, "invalid username or password", http.StatusUnauthorized)
 			return
 		}
