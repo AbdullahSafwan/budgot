@@ -1,7 +1,11 @@
 package controllers
 
 import (
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"net/http"
+	"time"
 
 	"budgot/internal/ent"
 	"budgot/internal/ent/user"
@@ -28,6 +32,44 @@ func LoginHandler(db *ent.Client) http.HandlerFunc {
 			return
 		}
 
+		token := make([]byte, 32)
+		if _, err := rand.Read(token); err != nil {
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+
+		sum := sha256.Sum256(token)
+		sessionID := hex.EncodeToString(sum[:])
+
+		now := time.Now()
+		_, err = db.Session.Create().
+			SetID(sessionID).
+			SetOwnerID(u.ID).
+			SetExpiresAt(now.Add(7 * 24 * time.Hour)).
+			SetLastSeen(now).
+			SetIPAddress(r.RemoteAddr).
+			SetUserAgentHash(hashUserAgent(r.UserAgent())).
+			Save(r.Context())
+		if err != nil {
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+
+		http.SetCookie(w, &http.Cookie{
+			Name:     "session",
+			Value:    hex.EncodeToString(token),
+			Path:     "/",
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteLaxMode,
+			Expires:  now.Add(7 * 24 * time.Hour),
+		})
+
 		w.Write([]byte("login successful"))
 	}
+}
+
+func hashUserAgent(ua string) string {
+	sum := sha256.Sum256([]byte(ua))
+	return hex.EncodeToString(sum[:])
 }
