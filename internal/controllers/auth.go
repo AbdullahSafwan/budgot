@@ -1,12 +1,14 @@
 package controllers
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"net/http"
 	"time"
 
+	"budgot/internal/ent"
 	"budgot/internal/repository"
 
 	"golang.org/x/crypto/bcrypt"
@@ -14,7 +16,19 @@ import (
 
 var dummyHash, _ = bcrypt.GenerateFromPassword([]byte("fixed-dummy-value-for-timing-safety"), 12)
 
-func LoginHandler(users *repository.UserRepository, sessions *repository.SessionRepository, attempts *repository.LoginAttemptRepository) http.HandlerFunc {
+type UserFinder interface {
+	FindByUsername(ctx context.Context, username string) (*ent.User, error)
+}
+
+type SessionCreator interface {
+	Create(ctx context.Context, params repository.CreateSessionParams) (*ent.Session, error)
+}
+
+type AttemptRecorder interface {
+	Record(ctx context.Context, username, ipAddress string, success bool) error
+}
+
+func LoginHandler(users UserFinder, sessions SessionCreator, attempts AttemptRecorder) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		username := r.FormValue("username")
 		password := r.FormValue("password")
@@ -22,13 +36,13 @@ func LoginHandler(users *repository.UserRepository, sessions *repository.Session
 		u, err := users.FindByUsername(r.Context(), username)
 		if err != nil {
 			bcrypt.CompareHashAndPassword(dummyHash, []byte(password))
-			attempts.Record(r.Context(), username, r.RemoteAddr, false)
+			_ = attempts.Record(r.Context(), username, r.RemoteAddr, false)
 			http.Error(w, "invalid username or password", http.StatusUnauthorized)
 			return
 		}
 
 		if err := bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password)); err != nil {
-			attempts.Record(r.Context(), username, r.RemoteAddr, false)
+			_ = attempts.Record(r.Context(), username, r.RemoteAddr, false)
 			http.Error(w, "invalid username or password", http.StatusUnauthorized)
 			return
 		}
@@ -69,7 +83,7 @@ func LoginHandler(users *repository.UserRepository, sessions *repository.Session
 			Expires:  now.Add(7 * 24 * time.Hour),
 		})
 
-		attempts.Record(r.Context(), username, r.RemoteAddr, true)
+		_ = attempts.Record(r.Context(), username, r.RemoteAddr, true)
 		w.Write([]byte("login successful"))
 	}
 }
