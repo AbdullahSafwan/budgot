@@ -92,3 +92,36 @@ func hashUserAgent(ua string) string {
 	sum := sha256.Sum256([]byte(ua))
 	return hex.EncodeToString(sum[:])
 }
+
+type SessionDeleter interface {
+	Delete(ctx context.Context, id string) error
+}
+
+func LogoutHandler(sessions SessionDeleter) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("session")
+		if err != nil {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+
+		tokenBytes, err := hex.DecodeString(cookie.Value)
+		if err == nil {
+			sum := sha256.Sum256(tokenBytes)
+			sessionID := hex.EncodeToString(sum[:])
+			_ = sessions.Delete(r.Context(), sessionID)
+		}
+
+		http.SetCookie(w, &http.Cookie{
+			Name:     "session",
+			Value:    "",
+			Path:     "/",
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteLaxMode,
+			MaxAge:   -1,
+		})
+
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+	}
+}

@@ -33,5 +33,10 @@ func NewRouter(db *ent.Client) *chi.Mux {
 	})
 
 	router.With(loginLimiter).Post("/login", controllers.LoginHandler(users, sessions, attempts))
+	router.With(loginLimiter).Get("/login", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("login page placeholder"))
+	})
+
+	router.Post("/logout", controllers.LogoutHandler(sessions))
 	return router
 }
