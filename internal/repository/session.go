@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"budgot/internal/ent"
+	"budgot/internal/ent/session"
 )
 
 type SessionRepository struct {
@@ -33,4 +34,19 @@ func (r *SessionRepository) Create(ctx context.Context, params CreateSessionPara
 		SetIPAddress(params.IPAddress).
 		SetUserAgentHash(params.UserAgentHash).
 		Save(ctx)
+}
+
+func (r *SessionRepository) FindByID(ctx context.Context, id string) (*ent.Session, error) {
+	return r.client.Session.Query().
+		Where(session.IDEQ(id)).
+		WithOwner().Only(ctx)
+}
+
+func (r *SessionRepository) UpdateLastSeen(ctx context.Context, id string, t time.Time) error {
+	_, err := r.client.Session.UpdateOneID(id).SetLastSeen(t).Save(ctx)
+	return err
+}
+
+func (r *SessionRepository) Delete(ctx context.Context, id string) error {
+	return r.client.Session.DeleteOneID(id).Exec(ctx)
 }
