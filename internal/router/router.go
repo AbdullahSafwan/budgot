@@ -10,6 +10,7 @@ import (
 	"budgot/internal/ent"
 	"budgot/internal/middleware"
 	"budgot/internal/repository"
+	"budgot/web"
 
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
@@ -44,7 +45,7 @@ func NewRouter(db *ent.Client) *chi.Mux {
 
 	router.With(loginLimiter).Post("/login", controllers.LoginHandler(users, sessions, attempts))
 
-	var loginTmpl = template.Must(template.ParseFiles("web/templates/layout.html", "web/templates/login.html"))
+	var loginTmpl = template.Must(template.ParseFS(web.Templates, "templates/layout.html", "templates/login.html"))
 
 	router.Get("/login", func(w http.ResponseWriter, r *http.Request) {
 		loginTmpl.ExecuteTemplate(w, "layout.html", map[string]interface{}{
