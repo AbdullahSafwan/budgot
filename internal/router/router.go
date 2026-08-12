@@ -2,6 +2,8 @@ package router
 
 import (
 	"net/http"
+	"os"
+	"text/template"
 	"time"
 
 	"budgot/internal/controllers"
@@ -11,6 +13,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
+	"github.com/gorilla/csrf"
 
 	"github.com/go-chi/httprate"
 )
@@ -20,6 +23,11 @@ func NewRouter(db *ent.Client) *chi.Mux {
 	router.Use(chimw.ClientIPFromXFFTrustedProxies(1))
 	router.Use(chimw.Recoverer)
 	router.Use(middleware.SecurityHeaders)
+
+	csrfKey := []byte(os.Getenv("CSRF_AUTH_KEY"))
+
+	//TODO update to true after deployment and tls
+	router.Use(csrf.Protect(csrfKey, csrf.Secure(false)))
 
 	loginLimiter := httprate.LimitBy(5, time.Minute, func(r *http.Request) (string, error) {
 		return httprate.CanonicalizeIP(chimw.GetClientIP(r.Context())), nil
@@ -35,8 +43,13 @@ func NewRouter(db *ent.Client) *chi.Mux {
 	})
 
 	router.With(loginLimiter).Post("/login", controllers.LoginHandler(users, sessions, attempts))
+
+	var loginTmpl = template.Must(template.ParseFiles("web/templates/layout.html", "web/templates/login.html"))
+
 	router.Get("/login", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("login page placeholder"))
+		loginTmpl.ExecuteTemplate(w, "layout.html", map[string]interface{}{
+			csrf.TemplateTag: csrf.TemplateField(r),
+		})
 	})
 
 	router.Post("/logout", controllers.LogoutHandler(sessions))
