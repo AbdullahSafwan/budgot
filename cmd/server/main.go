@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/joho/godotenv"
 
@@ -21,9 +22,18 @@ func main() {
 	}
 	defer db.Close()
 
-	r := router.NewRouter()
+	r := router.NewRouter(db)
+
+	srv := &http.Server{
+		Addr:         ":8080",
+		Handler:      r,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	}
+
 	log.Println("Starting server on :8080")
-	if err := http.ListenAndServe(":8080", r); err != nil {
+	if err := srv.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
 

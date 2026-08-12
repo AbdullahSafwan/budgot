@@ -1,0 +1,24 @@
+package repository
+
+import (
+	"context"
+
+	"budgot/internal/ent"
+)
+
+type LoginAttemptRepository struct {
+	client *ent.Client
+}
+
+func NewLoginAttemptRepository(client *ent.Client) *LoginAttemptRepository {
+	return &LoginAttemptRepository{client: client}
+}
+
+func (r *LoginAttemptRepository) Record(ctx context.Context, username, ipAddress string, success bool) error {
+	_, err := r.client.LoginAttempt.Create().
+		SetUsername(username).
+		SetIPAddress(ipAddress).
+		SetSuccess(success).
+		Save(ctx)
+	return err
+}
