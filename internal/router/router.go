@@ -18,6 +18,8 @@ import (
 func NewRouter(db *ent.Client) *chi.Mux {
 	router := chi.NewRouter()
 	router.Use(chimw.ClientIPFromXFFTrustedProxies(1))
+	router.Use(chimw.Recoverer)
+	router.Use(middleware.SecurityHeaders)
 
 	loginLimiter := httprate.LimitBy(5, time.Minute, func(r *http.Request) (string, error) {
 		return httprate.CanonicalizeIP(chimw.GetClientIP(r.Context())), nil
@@ -33,7 +35,7 @@ func NewRouter(db *ent.Client) *chi.Mux {
 	})
 
 	router.With(loginLimiter).Post("/login", controllers.LoginHandler(users, sessions, attempts))
-	router.With(loginLimiter).Get("/login", func(w http.ResponseWriter, r *http.Request) {
+	router.Get("/login", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("login page placeholder"))
 	})
 
