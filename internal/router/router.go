@@ -2,10 +2,10 @@ package router
 
 import (
 	"net/http"
-	"os"
 	"text/template"
 	"time"
 
+	"budgot/internal/configs"
 	"budgot/internal/controllers"
 	"budgot/internal/ent"
 	"budgot/internal/middleware"
@@ -19,16 +19,16 @@ import (
 	"github.com/go-chi/httprate"
 )
 
-func NewRouter(db *ent.Client) *chi.Mux {
+func NewRouter(db *ent.Client, cfg configs.Config) *chi.Mux {
 	router := chi.NewRouter()
 	router.Use(chimw.ClientIPFromXFFTrustedProxies(1))
 	router.Use(chimw.Recoverer)
-	router.Use(middleware.SecurityHeaders)
+	router.Use(middleware.SecurityHeaders(cfg.IsProduction()))
 
-	csrfKey := []byte(os.Getenv("CSRF_AUTH_KEY"))
+	csrfKey := []byte(cfg.CSRFAuthKey)
 
 	//TODO update to true after deployment and tls
-	router.Use(csrf.Protect(csrfKey, csrf.Secure(false)))
+	router.Use(csrf.Protect(csrfKey, csrf.Secure(cfg.IsProduction())))
 
 	loginLimiter := httprate.LimitBy(5, time.Minute, func(r *http.Request) (string, error) {
 		return httprate.CanonicalizeIP(chimw.GetClientIP(r.Context())), nil

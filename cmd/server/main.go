@@ -26,10 +26,15 @@ func main() {
 	}
 	defer db.Close()
 
-	r := router.NewRouter(db)
+	cfg, err := configs.LoadConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	r := router.NewRouter(db, cfg)
 
 	srv := &http.Server{
-		Addr:         ":8080",
+		Addr:         ":" + cfg.Port,
 		Handler:      r,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
@@ -37,7 +42,7 @@ func main() {
 	}
 
 	go func() {
-		log.Println("Starting server on :8080")
+		log.Println("Starting server on port", cfg.Port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatal(err)
 		}
