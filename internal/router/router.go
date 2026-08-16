@@ -27,7 +27,16 @@ func NewRouter(db *ent.Client, cfg configs.Config) *chi.Mux {
 
 	csrfKey := []byte(cfg.CSRFAuthKey)
 
-	//TODO update to true after deployment and tls
+	if !cfg.IsProduction() {
+		//TODO Add logger
+		// router.Use(middleware.DevLogger)
+		router.Use(func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				next.ServeHTTP(w, csrf.PlaintextHTTPRequest(r))
+			})
+		})
+	}
+
 	router.Use(csrf.Protect(csrfKey, csrf.Secure(cfg.IsProduction())))
 
 	loginLimiter := httprate.LimitBy(5, time.Minute, func(r *http.Request) (string, error) {
