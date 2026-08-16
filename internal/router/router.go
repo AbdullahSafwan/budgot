@@ -43,7 +43,7 @@ func NewRouter(db *ent.Client, cfg configs.Config) *chi.Mux {
 		w.Write([]byte("Welcome, " + u.Username))
 	})
 
-	router.With(loginLimiter).Post("/login", controllers.LoginHandler(users, sessions, attempts))
+	router.With(loginLimiter).Post("/login", controllers.LoginHandler(users, sessions, attempts, cfg.IsProduction()))
 
 	var loginTmpl = template.Must(template.ParseFS(web.Templates, "templates/layout.html", "templates/login.html"))
 
@@ -53,6 +53,6 @@ func NewRouter(db *ent.Client, cfg configs.Config) *chi.Mux {
 		})
 	})
 
-	router.Post("/logout", controllers.LogoutHandler(sessions))
+	router.Post("/logout", controllers.LogoutHandler(sessions, cfg.IsProduction()))
 	return router
 }

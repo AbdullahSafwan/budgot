@@ -15,19 +15,26 @@ func (c Config) IsProduction() bool {
 	return c.AppEnv == "production"
 }
 
-func LoadConfig() (Config, error) {
-	csrfKey := os.Getenv("CSRF_AUTH_KEY")
-	if csrfKey == "" {
-		return Config{}, fmt.Errorf("CSRF_AUTH_KEY is not set")
+func requireEnv(key string) (string, error) {
+	v := os.Getenv(key)
+	if v == "" {
+		return "", fmt.Errorf("%s is not set", key)
 	}
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+	return v, nil
+}
 
-	appEnv := os.Getenv("APP_ENV")
-	if appEnv == "" {
-		appEnv = "development"
+func LoadConfig() (Config, error) {
+	csrfKey, err := requireEnv("CSRF_AUTH_KEY")
+	if err != nil {
+		return Config{}, err
+	}
+	port, err := requireEnv("PORT")
+	if err != nil {
+		return Config{}, err
+	}
+	appEnv, err := requireEnv("APP_ENV")
+	if err != nil {
+		return Config{}, err
 	}
 
 	return Config{
