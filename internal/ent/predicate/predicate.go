@@ -6,6 +6,12 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Country is the predicate function for country builders.
+type Country func(*sql.Selector)
+
+// Currency is the predicate function for currency builders.
+type Currency func(*sql.Selector)
+
 // LoginAttempt is the predicate function for loginattempt builders.
 type LoginAttempt func(*sql.Selector)
 
