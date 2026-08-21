@@ -8,6 +8,43 @@ import (
 )
 
 var (
+	// AccountsColumns holds the columns for the "accounts" table.
+	AccountsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "account_type", Type: field.TypeEnum, Enums: []string{"checking", "savings", "credit", "cash", "investment"}, Default: "checking"},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "country_id", Type: field.TypeInt},
+		{Name: "currency_id", Type: field.TypeInt},
+		{Name: "user_id", Type: field.TypeInt},
+	}
+	// AccountsTable holds the schema information for the "accounts" table.
+	AccountsTable = &schema.Table{
+		Name:       "accounts",
+		Columns:    AccountsColumns,
+		PrimaryKey: []*schema.Column{AccountsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "accounts_countries_accounts",
+				Columns:    []*schema.Column{AccountsColumns[5]},
+				RefColumns: []*schema.Column{CountriesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "accounts_currencies_accounts",
+				Columns:    []*schema.Column{AccountsColumns[6]},
+				RefColumns: []*schema.Column{CurrenciesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "accounts_users_accounts",
+				Columns:    []*schema.Column{AccountsColumns[7]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// CountriesColumns holds the columns for the "countries" table.
 	CountriesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -90,6 +127,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		AccountsTable,
 		CountriesTable,
 		CurrenciesTable,
 		LoginAttemptsTable,
@@ -99,5 +137,8 @@ var (
 )
 
 func init() {
+	AccountsTable.ForeignKeys[0].RefTable = CountriesTable
+	AccountsTable.ForeignKeys[1].RefTable = CurrenciesTable
+	AccountsTable.ForeignKeys[2].RefTable = UsersTable
 	SessionsTable.ForeignKeys[0].RefTable = UsersTable
 }

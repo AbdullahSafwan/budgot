@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"budgot/internal/ent/account"
 	"budgot/internal/ent/currency"
 	"budgot/internal/ent/predicate"
 	"context"
@@ -96,9 +97,45 @@ func (_u *CurrencyUpdate) AddDecimalPlaces(v int) *CurrencyUpdate {
 	return _u
 }
 
+// AddAccountIDs adds the "accounts" edge to the Account entity by IDs.
+func (_u *CurrencyUpdate) AddAccountIDs(ids ...int) *CurrencyUpdate {
+	_u.mutation.AddAccountIDs(ids...)
+	return _u
+}
+
+// AddAccounts adds the "accounts" edges to the Account entity.
+func (_u *CurrencyUpdate) AddAccounts(v ...*Account) *CurrencyUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAccountIDs(ids...)
+}
+
 // Mutation returns the CurrencyMutation object of the builder.
 func (_u *CurrencyUpdate) Mutation() *CurrencyMutation {
 	return _u.mutation
+}
+
+// ClearAccounts clears all "accounts" edges to the Account entity.
+func (_u *CurrencyUpdate) ClearAccounts() *CurrencyUpdate {
+	_u.mutation.ClearAccounts()
+	return _u
+}
+
+// RemoveAccountIDs removes the "accounts" edge to Account entities by IDs.
+func (_u *CurrencyUpdate) RemoveAccountIDs(ids ...int) *CurrencyUpdate {
+	_u.mutation.RemoveAccountIDs(ids...)
+	return _u
+}
+
+// RemoveAccounts removes "accounts" edges to Account entities.
+func (_u *CurrencyUpdate) RemoveAccounts(v ...*Account) *CurrencyUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAccountIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -172,6 +209,51 @@ func (_u *CurrencyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.AddedDecimalPlaces(); ok {
 		_spec.AddField(currency.FieldDecimalPlaces, field.TypeInt, value)
+	}
+	if _u.mutation.AccountsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   currency.AccountsTable,
+			Columns: []string{currency.AccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAccountsIDs(); len(nodes) > 0 && !_u.mutation.AccountsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   currency.AccountsTable,
+			Columns: []string{currency.AccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AccountsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   currency.AccountsTable,
+			Columns: []string{currency.AccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -262,9 +344,45 @@ func (_u *CurrencyUpdateOne) AddDecimalPlaces(v int) *CurrencyUpdateOne {
 	return _u
 }
 
+// AddAccountIDs adds the "accounts" edge to the Account entity by IDs.
+func (_u *CurrencyUpdateOne) AddAccountIDs(ids ...int) *CurrencyUpdateOne {
+	_u.mutation.AddAccountIDs(ids...)
+	return _u
+}
+
+// AddAccounts adds the "accounts" edges to the Account entity.
+func (_u *CurrencyUpdateOne) AddAccounts(v ...*Account) *CurrencyUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAccountIDs(ids...)
+}
+
 // Mutation returns the CurrencyMutation object of the builder.
 func (_u *CurrencyUpdateOne) Mutation() *CurrencyMutation {
 	return _u.mutation
+}
+
+// ClearAccounts clears all "accounts" edges to the Account entity.
+func (_u *CurrencyUpdateOne) ClearAccounts() *CurrencyUpdateOne {
+	_u.mutation.ClearAccounts()
+	return _u
+}
+
+// RemoveAccountIDs removes the "accounts" edge to Account entities by IDs.
+func (_u *CurrencyUpdateOne) RemoveAccountIDs(ids ...int) *CurrencyUpdateOne {
+	_u.mutation.RemoveAccountIDs(ids...)
+	return _u
+}
+
+// RemoveAccounts removes "accounts" edges to Account entities.
+func (_u *CurrencyUpdateOne) RemoveAccounts(v ...*Account) *CurrencyUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAccountIDs(ids...)
 }
 
 // Where appends a list predicates to the CurrencyUpdate builder.
@@ -368,6 +486,51 @@ func (_u *CurrencyUpdateOne) sqlSave(ctx context.Context) (_node *Currency, err 
 	}
 	if value, ok := _u.mutation.AddedDecimalPlaces(); ok {
 		_spec.AddField(currency.FieldDecimalPlaces, field.TypeInt, value)
+	}
+	if _u.mutation.AccountsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   currency.AccountsTable,
+			Columns: []string{currency.AccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAccountsIDs(); len(nodes) > 0 && !_u.mutation.AccountsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   currency.AccountsTable,
+			Columns: []string{currency.AccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AccountsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   currency.AccountsTable,
+			Columns: []string{currency.AccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Currency{config: _u.config}
 	_spec.Assign = _node.assignValues

@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"budgot/internal/ent/account"
 	"budgot/internal/ent/country"
 	"context"
 	"errors"
@@ -29,6 +30,21 @@ func (_c *CountryCreate) SetCode(v string) *CountryCreate {
 func (_c *CountryCreate) SetName(v string) *CountryCreate {
 	_c.mutation.SetName(v)
 	return _c
+}
+
+// AddAccountIDs adds the "accounts" edge to the Account entity by IDs.
+func (_c *CountryCreate) AddAccountIDs(ids ...int) *CountryCreate {
+	_c.mutation.AddAccountIDs(ids...)
+	return _c
+}
+
+// AddAccounts adds the "accounts" edges to the Account entity.
+func (_c *CountryCreate) AddAccounts(v ...*Account) *CountryCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddAccountIDs(ids...)
 }
 
 // Mutation returns the CountryMutation object of the builder.
@@ -114,6 +130,22 @@ func (_c *CountryCreate) createSpec() (*Country, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(country.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if nodes := _c.mutation.AccountsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   country.AccountsTable,
+			Columns: []string{country.AccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

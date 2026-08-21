@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -19,5 +20,7 @@ func (Currency) Fields() []ent.Field {
 }
 
 func (Currency) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("accounts", Account.Type).StorageKey(edge.Column("currency_id")),
+	}
 }

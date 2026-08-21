@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -17,5 +18,7 @@ func (Country) Fields() []ent.Field {
 }
 
 func (Country) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("accounts", Account.Type).StorageKey(edge.Column("country_id")),
+	}
 }

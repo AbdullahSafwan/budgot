@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"budgot/internal/ent/account"
 	"budgot/internal/ent/currency"
 	"context"
 	"errors"
@@ -57,6 +58,21 @@ func (_c *CurrencyCreate) SetNillableDecimalPlaces(v *int) *CurrencyCreate {
 		_c.SetDecimalPlaces(*v)
 	}
 	return _c
+}
+
+// AddAccountIDs adds the "accounts" edge to the Account entity by IDs.
+func (_c *CurrencyCreate) AddAccountIDs(ids ...int) *CurrencyCreate {
+	_c.mutation.AddAccountIDs(ids...)
+	return _c
+}
+
+// AddAccounts adds the "accounts" edges to the Account entity.
+func (_c *CurrencyCreate) AddAccounts(v ...*Account) *CurrencyCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddAccountIDs(ids...)
 }
 
 // Mutation returns the CurrencyMutation object of the builder.
@@ -162,6 +178,22 @@ func (_c *CurrencyCreate) createSpec() (*Currency, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.DecimalPlaces(); ok {
 		_spec.SetField(currency.FieldDecimalPlaces, field.TypeInt, value)
 		_node.DecimalPlaces = value
+	}
+	if nodes := _c.mutation.AccountsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   currency.AccountsTable,
+			Columns: []string{currency.AccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"budgot/internal/ent/account"
 	"budgot/internal/ent/country"
 	"budgot/internal/ent/predicate"
 	"context"
@@ -55,9 +56,45 @@ func (_u *CountryUpdate) SetNillableName(v *string) *CountryUpdate {
 	return _u
 }
 
+// AddAccountIDs adds the "accounts" edge to the Account entity by IDs.
+func (_u *CountryUpdate) AddAccountIDs(ids ...int) *CountryUpdate {
+	_u.mutation.AddAccountIDs(ids...)
+	return _u
+}
+
+// AddAccounts adds the "accounts" edges to the Account entity.
+func (_u *CountryUpdate) AddAccounts(v ...*Account) *CountryUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAccountIDs(ids...)
+}
+
 // Mutation returns the CountryMutation object of the builder.
 func (_u *CountryUpdate) Mutation() *CountryMutation {
 	return _u.mutation
+}
+
+// ClearAccounts clears all "accounts" edges to the Account entity.
+func (_u *CountryUpdate) ClearAccounts() *CountryUpdate {
+	_u.mutation.ClearAccounts()
+	return _u
+}
+
+// RemoveAccountIDs removes the "accounts" edge to Account entities by IDs.
+func (_u *CountryUpdate) RemoveAccountIDs(ids ...int) *CountryUpdate {
+	_u.mutation.RemoveAccountIDs(ids...)
+	return _u
+}
+
+// RemoveAccounts removes "accounts" edges to Account entities.
+func (_u *CountryUpdate) RemoveAccounts(v ...*Account) *CountryUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAccountIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -120,6 +157,51 @@ func (_u *CountryUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(country.FieldName, field.TypeString, value)
 	}
+	if _u.mutation.AccountsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   country.AccountsTable,
+			Columns: []string{country.AccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAccountsIDs(); len(nodes) > 0 && !_u.mutation.AccountsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   country.AccountsTable,
+			Columns: []string{country.AccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AccountsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   country.AccountsTable,
+			Columns: []string{country.AccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{country.Label}
@@ -168,9 +250,45 @@ func (_u *CountryUpdateOne) SetNillableName(v *string) *CountryUpdateOne {
 	return _u
 }
 
+// AddAccountIDs adds the "accounts" edge to the Account entity by IDs.
+func (_u *CountryUpdateOne) AddAccountIDs(ids ...int) *CountryUpdateOne {
+	_u.mutation.AddAccountIDs(ids...)
+	return _u
+}
+
+// AddAccounts adds the "accounts" edges to the Account entity.
+func (_u *CountryUpdateOne) AddAccounts(v ...*Account) *CountryUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAccountIDs(ids...)
+}
+
 // Mutation returns the CountryMutation object of the builder.
 func (_u *CountryUpdateOne) Mutation() *CountryMutation {
 	return _u.mutation
+}
+
+// ClearAccounts clears all "accounts" edges to the Account entity.
+func (_u *CountryUpdateOne) ClearAccounts() *CountryUpdateOne {
+	_u.mutation.ClearAccounts()
+	return _u
+}
+
+// RemoveAccountIDs removes the "accounts" edge to Account entities by IDs.
+func (_u *CountryUpdateOne) RemoveAccountIDs(ids ...int) *CountryUpdateOne {
+	_u.mutation.RemoveAccountIDs(ids...)
+	return _u
+}
+
+// RemoveAccounts removes "accounts" edges to Account entities.
+func (_u *CountryUpdateOne) RemoveAccounts(v ...*Account) *CountryUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAccountIDs(ids...)
 }
 
 // Where appends a list predicates to the CountryUpdate builder.
@@ -262,6 +380,51 @@ func (_u *CountryUpdateOne) sqlSave(ctx context.Context) (_node *Country, err er
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(country.FieldName, field.TypeString, value)
+	}
+	if _u.mutation.AccountsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   country.AccountsTable,
+			Columns: []string{country.AccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAccountsIDs(); len(nodes) > 0 && !_u.mutation.AccountsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   country.AccountsTable,
+			Columns: []string{country.AccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AccountsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   country.AccountsTable,
+			Columns: []string{country.AccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Country{config: _u.config}
 	_spec.Assign = _node.assignValues

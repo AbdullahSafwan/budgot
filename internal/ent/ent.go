@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"budgot/internal/ent/account"
 	"budgot/internal/ent/country"
 	"budgot/internal/ent/currency"
 	"budgot/internal/ent/loginattempt"
@@ -77,6 +78,7 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
+			account.Table:      account.ValidColumn,
 			country.Table:      country.ValidColumn,
 			currency.Table:     currency.ValidColumn,
 			loginattempt.Table: loginattempt.ValidColumn,

@@ -3,9 +3,11 @@
 package ent
 
 import (
+	"budgot/internal/ent/account"
 	"budgot/internal/ent/country"
 	"budgot/internal/ent/predicate"
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -18,10 +20,11 @@ import (
 // CountryQuery is the builder for querying Country entities.
 type CountryQuery struct {
 	config
-	ctx        *QueryContext
-	order      []country.OrderOption
-	inters     []Interceptor
-	predicates []predicate.Country
+	ctx          *QueryContext
+	order        []country.OrderOption
+	inters       []Interceptor
+	predicates   []predicate.Country
+	withAccounts *AccountQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -56,6 +59,28 @@ func (_q *CountryQuery) Unique(unique bool) *CountryQuery {
 func (_q *CountryQuery) Order(o ...country.OrderOption) *CountryQuery {
 	_q.order = append(_q.order, o...)
 	return _q
+}
+
+// QueryAccounts chains the current query on the "accounts" edge.
+func (_q *CountryQuery) QueryAccounts() *AccountQuery {
+	query := (&AccountClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(country.Table, country.FieldID, selector),
+			sqlgraph.To(account.Table, account.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, country.AccountsTable, country.AccountsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Country entity from the query.
@@ -245,15 +270,27 @@ func (_q *CountryQuery) Clone() *CountryQuery {
 		return nil
 	}
 	return &CountryQuery{
-		config:     _q.config,
-		ctx:        _q.ctx.Clone(),
-		order:      append([]country.OrderOption{}, _q.order...),
-		inters:     append([]Interceptor{}, _q.inters...),
-		predicates: append([]predicate.Country{}, _q.predicates...),
+		config:       _q.config,
+		ctx:          _q.ctx.Clone(),
+		order:        append([]country.OrderOption{}, _q.order...),
+		inters:       append([]Interceptor{}, _q.inters...),
+		predicates:   append([]predicate.Country{}, _q.predicates...),
+		withAccounts: _q.withAccounts.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
+}
+
+// WithAccounts tells the query-builder to eager-load the nodes that are connected to
+// the "accounts" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *CountryQuery) WithAccounts(opts ...func(*AccountQuery)) *CountryQuery {
+	query := (&AccountClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withAccounts = query
+	return _q
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -332,8 +369,11 @@ func (_q *CountryQuery) prepareQuery(ctx context.Context) error {
 
 func (_q *CountryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Country, error) {
 	var (
-		nodes = []*Country{}
-		_spec = _q.querySpec()
+		nodes       = []*Country{}
+		_spec       = _q.querySpec()
+		loadedTypes = [1]bool{
+			_q.withAccounts != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Country).scanValues(nil, columns)
@@ -341,6 +381,7 @@ func (_q *CountryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Coun
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Country{config: _q.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -352,7 +393,46 @@ func (_q *CountryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Coun
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := _q.withAccounts; query != nil {
+		if err := _q.loadAccounts(ctx, query, nodes,
+			func(n *Country) { n.Edges.Accounts = []*Account{} },
+			func(n *Country, e *Account) { n.Edges.Accounts = append(n.Edges.Accounts, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (_q *CountryQuery) loadAccounts(ctx context.Context, query *AccountQuery, nodes []*Country, init func(*Country), assign func(*Country, *Account)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Country)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Account(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(country.AccountsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.country_id
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "country_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "country_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
 }
 
 func (_q *CountryQuery) sqlCount(ctx context.Context) (int, error) {

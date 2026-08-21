@@ -4,6 +4,7 @@ package currency
 
 import (
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -19,8 +20,17 @@ const (
 	FieldSymbol = "symbol"
 	// FieldDecimalPlaces holds the string denoting the decimal_places field in the database.
 	FieldDecimalPlaces = "decimal_places"
+	// EdgeAccounts holds the string denoting the accounts edge name in mutations.
+	EdgeAccounts = "accounts"
 	// Table holds the table name of the currency in the database.
 	Table = "currencies"
+	// AccountsTable is the table that holds the accounts relation/edge.
+	AccountsTable = "accounts"
+	// AccountsInverseTable is the table name for the Account entity.
+	// It exists in this package in order to avoid circular dependency with the "account" package.
+	AccountsInverseTable = "accounts"
+	// AccountsColumn is the table column denoting the accounts relation/edge.
+	AccountsColumn = "currency_id"
 )
 
 // Columns holds all SQL columns for currency fields.
@@ -77,4 +87,25 @@ func BySymbol(opts ...sql.OrderTermOption) OrderOption {
 // ByDecimalPlaces orders the results by the decimal_places field.
 func ByDecimalPlaces(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDecimalPlaces, opts...).ToFunc()
+}
+
+// ByAccountsCount orders the results by accounts count.
+func ByAccountsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAccountsStep(), opts...)
+	}
+}
+
+// ByAccounts orders the results by accounts terms.
+func ByAccounts(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAccountsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newAccountsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AccountsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, AccountsTable, AccountsColumn),
+	)
 }

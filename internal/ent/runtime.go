@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"budgot/internal/ent/account"
 	"budgot/internal/ent/country"
 	"budgot/internal/ent/currency"
 	"budgot/internal/ent/loginattempt"
@@ -16,6 +17,22 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	accountFields := schema.Account{}.Fields()
+	_ = accountFields
+	// accountDescName is the schema descriptor for name field.
+	accountDescName := accountFields[0].Descriptor()
+	// account.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	account.NameValidator = accountDescName.Validators[0].(func(string) error)
+	// accountDescCreatedAt is the schema descriptor for created_at field.
+	accountDescCreatedAt := accountFields[2].Descriptor()
+	// account.DefaultCreatedAt holds the default value on creation for the created_at field.
+	account.DefaultCreatedAt = accountDescCreatedAt.Default.(func() time.Time)
+	// accountDescUpdatedAt is the schema descriptor for updated_at field.
+	accountDescUpdatedAt := accountFields[3].Descriptor()
+	// account.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	account.DefaultUpdatedAt = accountDescUpdatedAt.Default.(func() time.Time)
+	// account.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	account.UpdateDefaultUpdatedAt = accountDescUpdatedAt.UpdateDefault.(func() time.Time)
 	countryFields := schema.Country{}.Fields()
 	_ = countryFields
 	// countryDescCode is the schema descriptor for code field.
