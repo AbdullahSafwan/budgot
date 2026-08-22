@@ -5,11 +5,11 @@ package ent
 import (
 	"budgot/internal/ent/budget"
 	"budgot/internal/ent/category"
+	"budgot/internal/ent/country"
+	"budgot/internal/ent/currency"
 	"budgot/internal/ent/predicate"
-	"budgot/internal/ent/transaction"
 	"budgot/internal/ent/user"
 	"context"
-	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -19,55 +19,56 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// CategoryQuery is the builder for querying Category entities.
-type CategoryQuery struct {
+// BudgetQuery is the builder for querying Budget entities.
+type BudgetQuery struct {
 	config
-	ctx              *QueryContext
-	order            []category.OrderOption
-	inters           []Interceptor
-	predicates       []predicate.Category
-	withOwner        *UserQuery
-	withTransactions *TransactionQuery
-	withBudgets      *BudgetQuery
-	withFKs          bool
+	ctx          *QueryContext
+	order        []budget.OrderOption
+	inters       []Interceptor
+	predicates   []predicate.Budget
+	withOwner    *UserQuery
+	withCategory *CategoryQuery
+	withCountry  *CountryQuery
+	withCurrency *CurrencyQuery
+	withFKs      bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the CategoryQuery builder.
-func (_q *CategoryQuery) Where(ps ...predicate.Category) *CategoryQuery {
+// Where adds a new predicate for the BudgetQuery builder.
+func (_q *BudgetQuery) Where(ps ...predicate.Budget) *BudgetQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *CategoryQuery) Limit(limit int) *CategoryQuery {
+func (_q *BudgetQuery) Limit(limit int) *BudgetQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *CategoryQuery) Offset(offset int) *CategoryQuery {
+func (_q *BudgetQuery) Offset(offset int) *BudgetQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *CategoryQuery) Unique(unique bool) *CategoryQuery {
+func (_q *BudgetQuery) Unique(unique bool) *BudgetQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *CategoryQuery) Order(o ...category.OrderOption) *CategoryQuery {
+func (_q *BudgetQuery) Order(o ...budget.OrderOption) *BudgetQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
 // QueryOwner chains the current query on the "owner" edge.
-func (_q *CategoryQuery) QueryOwner() *UserQuery {
+func (_q *BudgetQuery) QueryOwner() *UserQuery {
 	query := (&UserClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
@@ -78,9 +79,9 @@ func (_q *CategoryQuery) QueryOwner() *UserQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(category.Table, category.FieldID, selector),
+			sqlgraph.From(budget.Table, budget.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, category.OwnerTable, category.OwnerColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, budget.OwnerTable, budget.OwnerColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -88,9 +89,9 @@ func (_q *CategoryQuery) QueryOwner() *UserQuery {
 	return query
 }
 
-// QueryTransactions chains the current query on the "transactions" edge.
-func (_q *CategoryQuery) QueryTransactions() *TransactionQuery {
-	query := (&TransactionClient{config: _q.config}).Query()
+// QueryCategory chains the current query on the "category" edge.
+func (_q *BudgetQuery) QueryCategory() *CategoryQuery {
+	query := (&CategoryClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -100,9 +101,9 @@ func (_q *CategoryQuery) QueryTransactions() *TransactionQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(category.Table, category.FieldID, selector),
-			sqlgraph.To(transaction.Table, transaction.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, category.TransactionsTable, category.TransactionsColumn),
+			sqlgraph.From(budget.Table, budget.FieldID, selector),
+			sqlgraph.To(category.Table, category.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, budget.CategoryTable, budget.CategoryColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -110,9 +111,9 @@ func (_q *CategoryQuery) QueryTransactions() *TransactionQuery {
 	return query
 }
 
-// QueryBudgets chains the current query on the "budgets" edge.
-func (_q *CategoryQuery) QueryBudgets() *BudgetQuery {
-	query := (&BudgetClient{config: _q.config}).Query()
+// QueryCountry chains the current query on the "country" edge.
+func (_q *BudgetQuery) QueryCountry() *CountryQuery {
+	query := (&CountryClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -122,9 +123,9 @@ func (_q *CategoryQuery) QueryBudgets() *BudgetQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(category.Table, category.FieldID, selector),
-			sqlgraph.To(budget.Table, budget.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, category.BudgetsTable, category.BudgetsColumn),
+			sqlgraph.From(budget.Table, budget.FieldID, selector),
+			sqlgraph.To(country.Table, country.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, budget.CountryTable, budget.CountryColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -132,21 +133,43 @@ func (_q *CategoryQuery) QueryBudgets() *BudgetQuery {
 	return query
 }
 
-// First returns the first Category entity from the query.
-// Returns a *NotFoundError when no Category was found.
-func (_q *CategoryQuery) First(ctx context.Context) (*Category, error) {
+// QueryCurrency chains the current query on the "currency" edge.
+func (_q *BudgetQuery) QueryCurrency() *CurrencyQuery {
+	query := (&CurrencyClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(budget.Table, budget.FieldID, selector),
+			sqlgraph.To(currency.Table, currency.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, budget.CurrencyTable, budget.CurrencyColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// First returns the first Budget entity from the query.
+// Returns a *NotFoundError when no Budget was found.
+func (_q *BudgetQuery) First(ctx context.Context) (*Budget, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{category.Label}
+		return nil, &NotFoundError{budget.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *CategoryQuery) FirstX(ctx context.Context) *Category {
+func (_q *BudgetQuery) FirstX(ctx context.Context) *Budget {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -154,22 +177,22 @@ func (_q *CategoryQuery) FirstX(ctx context.Context) *Category {
 	return node
 }
 
-// FirstID returns the first Category ID from the query.
-// Returns a *NotFoundError when no Category ID was found.
-func (_q *CategoryQuery) FirstID(ctx context.Context) (id int, err error) {
+// FirstID returns the first Budget ID from the query.
+// Returns a *NotFoundError when no Budget ID was found.
+func (_q *BudgetQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{category.Label}
+		err = &NotFoundError{budget.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *CategoryQuery) FirstIDX(ctx context.Context) int {
+func (_q *BudgetQuery) FirstIDX(ctx context.Context) int {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -177,10 +200,10 @@ func (_q *CategoryQuery) FirstIDX(ctx context.Context) int {
 	return id
 }
 
-// Only returns a single Category entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one Category entity is found.
-// Returns a *NotFoundError when no Category entities are found.
-func (_q *CategoryQuery) Only(ctx context.Context) (*Category, error) {
+// Only returns a single Budget entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one Budget entity is found.
+// Returns a *NotFoundError when no Budget entities are found.
+func (_q *BudgetQuery) Only(ctx context.Context) (*Budget, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -189,14 +212,14 @@ func (_q *CategoryQuery) Only(ctx context.Context) (*Category, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{category.Label}
+		return nil, &NotFoundError{budget.Label}
 	default:
-		return nil, &NotSingularError{category.Label}
+		return nil, &NotSingularError{budget.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *CategoryQuery) OnlyX(ctx context.Context) *Category {
+func (_q *BudgetQuery) OnlyX(ctx context.Context) *Budget {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -204,10 +227,10 @@ func (_q *CategoryQuery) OnlyX(ctx context.Context) *Category {
 	return node
 }
 
-// OnlyID is like Only, but returns the only Category ID in the query.
-// Returns a *NotSingularError when more than one Category ID is found.
+// OnlyID is like Only, but returns the only Budget ID in the query.
+// Returns a *NotSingularError when more than one Budget ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *CategoryQuery) OnlyID(ctx context.Context) (id int, err error) {
+func (_q *BudgetQuery) OnlyID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -216,15 +239,15 @@ func (_q *CategoryQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{category.Label}
+		err = &NotFoundError{budget.Label}
 	default:
-		err = &NotSingularError{category.Label}
+		err = &NotSingularError{budget.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *CategoryQuery) OnlyIDX(ctx context.Context) int {
+func (_q *BudgetQuery) OnlyIDX(ctx context.Context) int {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -232,18 +255,18 @@ func (_q *CategoryQuery) OnlyIDX(ctx context.Context) int {
 	return id
 }
 
-// All executes the query and returns a list of Categories.
-func (_q *CategoryQuery) All(ctx context.Context) ([]*Category, error) {
+// All executes the query and returns a list of Budgets.
+func (_q *BudgetQuery) All(ctx context.Context) ([]*Budget, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*Category, *CategoryQuery]()
-	return withInterceptors[[]*Category](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*Budget, *BudgetQuery]()
+	return withInterceptors[[]*Budget](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *CategoryQuery) AllX(ctx context.Context) []*Category {
+func (_q *BudgetQuery) AllX(ctx context.Context) []*Budget {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -251,20 +274,20 @@ func (_q *CategoryQuery) AllX(ctx context.Context) []*Category {
 	return nodes
 }
 
-// IDs executes the query and returns a list of Category IDs.
-func (_q *CategoryQuery) IDs(ctx context.Context) (ids []int, err error) {
+// IDs executes the query and returns a list of Budget IDs.
+func (_q *BudgetQuery) IDs(ctx context.Context) (ids []int, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(category.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(budget.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *CategoryQuery) IDsX(ctx context.Context) []int {
+func (_q *BudgetQuery) IDsX(ctx context.Context) []int {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -273,16 +296,16 @@ func (_q *CategoryQuery) IDsX(ctx context.Context) []int {
 }
 
 // Count returns the count of the given query.
-func (_q *CategoryQuery) Count(ctx context.Context) (int, error) {
+func (_q *BudgetQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*CategoryQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*BudgetQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *CategoryQuery) CountX(ctx context.Context) int {
+func (_q *BudgetQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -291,7 +314,7 @@ func (_q *CategoryQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *CategoryQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *BudgetQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -304,7 +327,7 @@ func (_q *CategoryQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *CategoryQuery) ExistX(ctx context.Context) bool {
+func (_q *BudgetQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -312,21 +335,22 @@ func (_q *CategoryQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the CategoryQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the BudgetQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *CategoryQuery) Clone() *CategoryQuery {
+func (_q *BudgetQuery) Clone() *BudgetQuery {
 	if _q == nil {
 		return nil
 	}
-	return &CategoryQuery{
-		config:           _q.config,
-		ctx:              _q.ctx.Clone(),
-		order:            append([]category.OrderOption{}, _q.order...),
-		inters:           append([]Interceptor{}, _q.inters...),
-		predicates:       append([]predicate.Category{}, _q.predicates...),
-		withOwner:        _q.withOwner.Clone(),
-		withTransactions: _q.withTransactions.Clone(),
-		withBudgets:      _q.withBudgets.Clone(),
+	return &BudgetQuery{
+		config:       _q.config,
+		ctx:          _q.ctx.Clone(),
+		order:        append([]budget.OrderOption{}, _q.order...),
+		inters:       append([]Interceptor{}, _q.inters...),
+		predicates:   append([]predicate.Budget{}, _q.predicates...),
+		withOwner:    _q.withOwner.Clone(),
+		withCategory: _q.withCategory.Clone(),
+		withCountry:  _q.withCountry.Clone(),
+		withCurrency: _q.withCurrency.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -335,7 +359,7 @@ func (_q *CategoryQuery) Clone() *CategoryQuery {
 
 // WithOwner tells the query-builder to eager-load the nodes that are connected to
 // the "owner" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *CategoryQuery) WithOwner(opts ...func(*UserQuery)) *CategoryQuery {
+func (_q *BudgetQuery) WithOwner(opts ...func(*UserQuery)) *BudgetQuery {
 	query := (&UserClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
@@ -344,25 +368,36 @@ func (_q *CategoryQuery) WithOwner(opts ...func(*UserQuery)) *CategoryQuery {
 	return _q
 }
 
-// WithTransactions tells the query-builder to eager-load the nodes that are connected to
-// the "transactions" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *CategoryQuery) WithTransactions(opts ...func(*TransactionQuery)) *CategoryQuery {
-	query := (&TransactionClient{config: _q.config}).Query()
+// WithCategory tells the query-builder to eager-load the nodes that are connected to
+// the "category" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *BudgetQuery) WithCategory(opts ...func(*CategoryQuery)) *BudgetQuery {
+	query := (&CategoryClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withTransactions = query
+	_q.withCategory = query
 	return _q
 }
 
-// WithBudgets tells the query-builder to eager-load the nodes that are connected to
-// the "budgets" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *CategoryQuery) WithBudgets(opts ...func(*BudgetQuery)) *CategoryQuery {
-	query := (&BudgetClient{config: _q.config}).Query()
+// WithCountry tells the query-builder to eager-load the nodes that are connected to
+// the "country" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *BudgetQuery) WithCountry(opts ...func(*CountryQuery)) *BudgetQuery {
+	query := (&CountryClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withBudgets = query
+	_q.withCountry = query
+	return _q
+}
+
+// WithCurrency tells the query-builder to eager-load the nodes that are connected to
+// the "currency" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *BudgetQuery) WithCurrency(opts ...func(*CurrencyQuery)) *BudgetQuery {
+	query := (&CurrencyClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withCurrency = query
 	return _q
 }
 
@@ -372,19 +407,19 @@ func (_q *CategoryQuery) WithBudgets(opts ...func(*BudgetQuery)) *CategoryQuery 
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		Month int `json:"month,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.Category.Query().
-//		GroupBy(category.FieldName).
+//	client.Budget.Query().
+//		GroupBy(budget.FieldMonth).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *CategoryQuery) GroupBy(field string, fields ...string) *CategoryGroupBy {
+func (_q *BudgetQuery) GroupBy(field string, fields ...string) *BudgetGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &CategoryGroupBy{build: _q}
+	grbuild := &BudgetGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = category.Label
+	grbuild.label = budget.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -395,26 +430,26 @@ func (_q *CategoryQuery) GroupBy(field string, fields ...string) *CategoryGroupB
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		Month int `json:"month,omitempty"`
 //	}
 //
-//	client.Category.Query().
-//		Select(category.FieldName).
+//	client.Budget.Query().
+//		Select(budget.FieldMonth).
 //		Scan(ctx, &v)
-func (_q *CategoryQuery) Select(fields ...string) *CategorySelect {
+func (_q *BudgetQuery) Select(fields ...string) *BudgetSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &CategorySelect{CategoryQuery: _q}
-	sbuild.label = category.Label
+	sbuild := &BudgetSelect{BudgetQuery: _q}
+	sbuild.label = budget.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a CategorySelect configured with the given aggregations.
-func (_q *CategoryQuery) Aggregate(fns ...AggregateFunc) *CategorySelect {
+// Aggregate returns a BudgetSelect configured with the given aggregations.
+func (_q *BudgetQuery) Aggregate(fns ...AggregateFunc) *BudgetSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *CategoryQuery) prepareQuery(ctx context.Context) error {
+func (_q *BudgetQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -426,7 +461,7 @@ func (_q *CategoryQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !category.ValidColumn(f) {
+		if !budget.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -440,28 +475,29 @@ func (_q *CategoryQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *CategoryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Category, error) {
+func (_q *BudgetQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Budget, error) {
 	var (
-		nodes       = []*Category{}
+		nodes       = []*Budget{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			_q.withOwner != nil,
-			_q.withTransactions != nil,
-			_q.withBudgets != nil,
+			_q.withCategory != nil,
+			_q.withCountry != nil,
+			_q.withCurrency != nil,
 		}
 	)
-	if _q.withOwner != nil {
+	if _q.withOwner != nil || _q.withCategory != nil || _q.withCountry != nil || _q.withCurrency != nil {
 		withFKs = true
 	}
 	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, category.ForeignKeys...)
+		_spec.Node.Columns = append(_spec.Node.Columns, budget.ForeignKeys...)
 	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*Category).scanValues(nil, columns)
+		return (*Budget).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &Category{config: _q.config}
+		node := &Budget{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -477,30 +513,34 @@ func (_q *CategoryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cat
 	}
 	if query := _q.withOwner; query != nil {
 		if err := _q.loadOwner(ctx, query, nodes, nil,
-			func(n *Category, e *User) { n.Edges.Owner = e }); err != nil {
+			func(n *Budget, e *User) { n.Edges.Owner = e }); err != nil {
 			return nil, err
 		}
 	}
-	if query := _q.withTransactions; query != nil {
-		if err := _q.loadTransactions(ctx, query, nodes,
-			func(n *Category) { n.Edges.Transactions = []*Transaction{} },
-			func(n *Category, e *Transaction) { n.Edges.Transactions = append(n.Edges.Transactions, e) }); err != nil {
+	if query := _q.withCategory; query != nil {
+		if err := _q.loadCategory(ctx, query, nodes, nil,
+			func(n *Budget, e *Category) { n.Edges.Category = e }); err != nil {
 			return nil, err
 		}
 	}
-	if query := _q.withBudgets; query != nil {
-		if err := _q.loadBudgets(ctx, query, nodes,
-			func(n *Category) { n.Edges.Budgets = []*Budget{} },
-			func(n *Category, e *Budget) { n.Edges.Budgets = append(n.Edges.Budgets, e) }); err != nil {
+	if query := _q.withCountry; query != nil {
+		if err := _q.loadCountry(ctx, query, nodes, nil,
+			func(n *Budget, e *Country) { n.Edges.Country = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withCurrency; query != nil {
+		if err := _q.loadCurrency(ctx, query, nodes, nil,
+			func(n *Budget, e *Currency) { n.Edges.Currency = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *CategoryQuery) loadOwner(ctx context.Context, query *UserQuery, nodes []*Category, init func(*Category), assign func(*Category, *User)) error {
+func (_q *BudgetQuery) loadOwner(ctx context.Context, query *UserQuery, nodes []*Budget, init func(*Budget), assign func(*Budget, *User)) error {
 	ids := make([]int, 0, len(nodes))
-	nodeids := make(map[int][]*Category)
+	nodeids := make(map[int][]*Budget)
 	for i := range nodes {
 		if nodes[i].user_id == nil {
 			continue
@@ -530,70 +570,104 @@ func (_q *CategoryQuery) loadOwner(ctx context.Context, query *UserQuery, nodes 
 	}
 	return nil
 }
-func (_q *CategoryQuery) loadTransactions(ctx context.Context, query *TransactionQuery, nodes []*Category, init func(*Category), assign func(*Category, *Transaction)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*Category)
+func (_q *BudgetQuery) loadCategory(ctx context.Context, query *CategoryQuery, nodes []*Budget, init func(*Budget), assign func(*Budget, *Category)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Budget)
 	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
+		if nodes[i].category_id == nil {
+			continue
 		}
+		fk := *nodes[i].category_id
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	query.withFKs = true
-	query.Where(predicate.Transaction(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(category.TransactionsColumn), fks...))
-	}))
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(category.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.category_id
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "category_id" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "category_id" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "category_id" returned %v`, n.ID)
 		}
-		assign(node, n)
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
 	}
 	return nil
 }
-func (_q *CategoryQuery) loadBudgets(ctx context.Context, query *BudgetQuery, nodes []*Category, init func(*Category), assign func(*Category, *Budget)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*Category)
+func (_q *BudgetQuery) loadCountry(ctx context.Context, query *CountryQuery, nodes []*Budget, init func(*Budget), assign func(*Budget, *Country)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Budget)
 	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
+		if nodes[i].country_id == nil {
+			continue
 		}
+		fk := *nodes[i].country_id
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	query.withFKs = true
-	query.Where(predicate.Budget(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(category.BudgetsColumn), fks...))
-	}))
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(country.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.category_id
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "category_id" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "category_id" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "country_id" returned %v`, n.ID)
 		}
-		assign(node, n)
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (_q *BudgetQuery) loadCurrency(ctx context.Context, query *CurrencyQuery, nodes []*Budget, init func(*Budget), assign func(*Budget, *Currency)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Budget)
+	for i := range nodes {
+		if nodes[i].currency_id == nil {
+			continue
+		}
+		fk := *nodes[i].currency_id
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(currency.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "currency_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
 	}
 	return nil
 }
 
-func (_q *CategoryQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *BudgetQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	_spec.Node.Columns = _q.ctx.Fields
 	if len(_q.ctx.Fields) > 0 {
@@ -602,8 +676,8 @@ func (_q *CategoryQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *CategoryQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(category.Table, category.Columns, sqlgraph.NewFieldSpec(category.FieldID, field.TypeInt))
+func (_q *BudgetQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(budget.Table, budget.Columns, sqlgraph.NewFieldSpec(budget.FieldID, field.TypeInt))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -612,9 +686,9 @@ func (_q *CategoryQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, category.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, budget.FieldID)
 		for i := range fields {
-			if fields[i] != category.FieldID {
+			if fields[i] != budget.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
@@ -642,12 +716,12 @@ func (_q *CategoryQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *CategoryQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *BudgetQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(category.Table)
+	t1 := builder.Table(budget.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = category.Columns
+		columns = budget.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -674,28 +748,28 @@ func (_q *CategoryQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// CategoryGroupBy is the group-by builder for Category entities.
-type CategoryGroupBy struct {
+// BudgetGroupBy is the group-by builder for Budget entities.
+type BudgetGroupBy struct {
 	selector
-	build *CategoryQuery
+	build *BudgetQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *CategoryGroupBy) Aggregate(fns ...AggregateFunc) *CategoryGroupBy {
+func (_g *BudgetGroupBy) Aggregate(fns ...AggregateFunc) *BudgetGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *CategoryGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *BudgetGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*CategoryQuery, *CategoryGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*BudgetQuery, *BudgetGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *CategoryGroupBy) sqlScan(ctx context.Context, root *CategoryQuery, v any) error {
+func (_g *BudgetGroupBy) sqlScan(ctx context.Context, root *BudgetQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -722,28 +796,28 @@ func (_g *CategoryGroupBy) sqlScan(ctx context.Context, root *CategoryQuery, v a
 	return sql.ScanSlice(rows, v)
 }
 
-// CategorySelect is the builder for selecting fields of Category entities.
-type CategorySelect struct {
-	*CategoryQuery
+// BudgetSelect is the builder for selecting fields of Budget entities.
+type BudgetSelect struct {
+	*BudgetQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *CategorySelect) Aggregate(fns ...AggregateFunc) *CategorySelect {
+func (_s *BudgetSelect) Aggregate(fns ...AggregateFunc) *BudgetSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *CategorySelect) Scan(ctx context.Context, v any) error {
+func (_s *BudgetSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*CategoryQuery, *CategorySelect](ctx, _s.CategoryQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*BudgetQuery, *BudgetSelect](ctx, _s.BudgetQuery, _s, _s.inters, v)
 }
 
-func (_s *CategorySelect) sqlScan(ctx context.Context, root *CategoryQuery, v any) error {
+func (_s *BudgetSelect) sqlScan(ctx context.Context, root *BudgetQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {

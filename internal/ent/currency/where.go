@@ -342,6 +342,29 @@ func HasAccountsWith(preds ...predicate.Account) predicate.Currency {
 	})
 }
 
+// HasBudgets applies the HasEdge predicate on the "budgets" edge.
+func HasBudgets() predicate.Currency {
+	return predicate.Currency(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, BudgetsTable, BudgetsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasBudgetsWith applies the HasEdge predicate on the "budgets" edge with a given conditions (other predicates).
+func HasBudgetsWith(preds ...predicate.Budget) predicate.Currency {
+	return predicate.Currency(func(s *sql.Selector) {
+		step := newBudgetsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Currency) predicate.Currency {
 	return predicate.Currency(sql.AndPredicates(predicates...))

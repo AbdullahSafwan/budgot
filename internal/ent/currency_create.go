@@ -4,6 +4,7 @@ package ent
 
 import (
 	"budgot/internal/ent/account"
+	"budgot/internal/ent/budget"
 	"budgot/internal/ent/currency"
 	"context"
 	"errors"
@@ -73,6 +74,21 @@ func (_c *CurrencyCreate) AddAccounts(v ...*Account) *CurrencyCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddAccountIDs(ids...)
+}
+
+// AddBudgetIDs adds the "budgets" edge to the Budget entity by IDs.
+func (_c *CurrencyCreate) AddBudgetIDs(ids ...int) *CurrencyCreate {
+	_c.mutation.AddBudgetIDs(ids...)
+	return _c
+}
+
+// AddBudgets adds the "budgets" edges to the Budget entity.
+func (_c *CurrencyCreate) AddBudgets(v ...*Budget) *CurrencyCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddBudgetIDs(ids...)
 }
 
 // Mutation returns the CurrencyMutation object of the builder.
@@ -188,6 +204,22 @@ func (_c *CurrencyCreate) createSpec() (*Currency, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.BudgetsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   currency.BudgetsTable,
+			Columns: []string{currency.BudgetsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(budget.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

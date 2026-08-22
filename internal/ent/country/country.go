@@ -18,6 +18,8 @@ const (
 	FieldName = "name"
 	// EdgeAccounts holds the string denoting the accounts edge name in mutations.
 	EdgeAccounts = "accounts"
+	// EdgeBudgets holds the string denoting the budgets edge name in mutations.
+	EdgeBudgets = "budgets"
 	// Table holds the table name of the country in the database.
 	Table = "countries"
 	// AccountsTable is the table that holds the accounts relation/edge.
@@ -27,6 +29,13 @@ const (
 	AccountsInverseTable = "accounts"
 	// AccountsColumn is the table column denoting the accounts relation/edge.
 	AccountsColumn = "country_id"
+	// BudgetsTable is the table that holds the budgets relation/edge.
+	BudgetsTable = "budgets"
+	// BudgetsInverseTable is the table name for the Budget entity.
+	// It exists in this package in order to avoid circular dependency with the "budget" package.
+	BudgetsInverseTable = "budgets"
+	// BudgetsColumn is the table column denoting the budgets relation/edge.
+	BudgetsColumn = "country_id"
 )
 
 // Columns holds all SQL columns for country fields.
@@ -84,10 +93,31 @@ func ByAccounts(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newAccountsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByBudgetsCount orders the results by budgets count.
+func ByBudgetsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newBudgetsStep(), opts...)
+	}
+}
+
+// ByBudgets orders the results by budgets terms.
+func ByBudgets(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newBudgetsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newAccountsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(AccountsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, AccountsTable, AccountsColumn),
+	)
+}
+func newBudgetsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(BudgetsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, BudgetsTable, BudgetsColumn),
 	)
 }

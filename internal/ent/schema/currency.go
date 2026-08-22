@@ -22,5 +22,6 @@ func (Currency) Fields() []ent.Field {
 func (Currency) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("accounts", Account.Type).StorageKey(edge.Column("currency_id")),
+		edge.To("budgets", Budget.Type).StorageKey(edge.Column("currency_id")),
 	}
 }

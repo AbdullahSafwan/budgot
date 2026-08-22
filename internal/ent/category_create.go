@@ -3,7 +3,9 @@
 package ent
 
 import (
+	"budgot/internal/ent/budget"
 	"budgot/internal/ent/category"
+	"budgot/internal/ent/transaction"
 	"budgot/internal/ent/user"
 	"context"
 	"errors"
@@ -47,6 +49,36 @@ func (_c *CategoryCreate) SetOwnerID(id int) *CategoryCreate {
 // SetOwner sets the "owner" edge to the User entity.
 func (_c *CategoryCreate) SetOwner(v *User) *CategoryCreate {
 	return _c.SetOwnerID(v.ID)
+}
+
+// AddTransactionIDs adds the "transactions" edge to the Transaction entity by IDs.
+func (_c *CategoryCreate) AddTransactionIDs(ids ...int) *CategoryCreate {
+	_c.mutation.AddTransactionIDs(ids...)
+	return _c
+}
+
+// AddTransactions adds the "transactions" edges to the Transaction entity.
+func (_c *CategoryCreate) AddTransactions(v ...*Transaction) *CategoryCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddTransactionIDs(ids...)
+}
+
+// AddBudgetIDs adds the "budgets" edge to the Budget entity by IDs.
+func (_c *CategoryCreate) AddBudgetIDs(ids ...int) *CategoryCreate {
+	_c.mutation.AddBudgetIDs(ids...)
+	return _c
+}
+
+// AddBudgets adds the "budgets" edges to the Budget entity.
+func (_c *CategoryCreate) AddBudgets(v ...*Budget) *CategoryCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddBudgetIDs(ids...)
 }
 
 // Mutation returns the CategoryMutation object of the builder.
@@ -163,6 +195,38 @@ func (_c *CategoryCreate) createSpec() (*Category, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.user_id = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.TransactionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   category.TransactionsTable,
+			Columns: []string{category.TransactionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(transaction.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.BudgetsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   category.BudgetsTable,
+			Columns: []string{category.BudgetsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(budget.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

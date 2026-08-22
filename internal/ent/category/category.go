@@ -22,6 +22,10 @@ const (
 	FieldColor = "color"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
 	EdgeOwner = "owner"
+	// EdgeTransactions holds the string denoting the transactions edge name in mutations.
+	EdgeTransactions = "transactions"
+	// EdgeBudgets holds the string denoting the budgets edge name in mutations.
+	EdgeBudgets = "budgets"
 	// Table holds the table name of the category in the database.
 	Table = "categories"
 	// OwnerTable is the table that holds the owner relation/edge.
@@ -31,6 +35,20 @@ const (
 	OwnerInverseTable = "users"
 	// OwnerColumn is the table column denoting the owner relation/edge.
 	OwnerColumn = "user_id"
+	// TransactionsTable is the table that holds the transactions relation/edge.
+	TransactionsTable = "transactions"
+	// TransactionsInverseTable is the table name for the Transaction entity.
+	// It exists in this package in order to avoid circular dependency with the "transaction" package.
+	TransactionsInverseTable = "transactions"
+	// TransactionsColumn is the table column denoting the transactions relation/edge.
+	TransactionsColumn = "category_id"
+	// BudgetsTable is the table that holds the budgets relation/edge.
+	BudgetsTable = "budgets"
+	// BudgetsInverseTable is the table name for the Budget entity.
+	// It exists in this package in order to avoid circular dependency with the "budget" package.
+	BudgetsInverseTable = "budgets"
+	// BudgetsColumn is the table column denoting the budgets relation/edge.
+	BudgetsColumn = "category_id"
 )
 
 // Columns holds all SQL columns for category fields.
@@ -74,8 +92,9 @@ type Type string
 
 // Type values.
 const (
-	TypeIncome  Type = "income"
-	TypeExpense Type = "expense"
+	TypeIncome   Type = "income"
+	TypeExpense  Type = "expense"
+	TypeTransfer Type = "transfer"
 )
 
 func (_type Type) String() string {
@@ -85,7 +104,7 @@ func (_type Type) String() string {
 // TypeValidator is a validator for the "type" field enum values. It is called by the builders before save.
 func TypeValidator(_type Type) error {
 	switch _type {
-	case TypeIncome, TypeExpense:
+	case TypeIncome, TypeExpense, TypeTransfer:
 		return nil
 	default:
 		return fmt.Errorf("category: invalid enum value for type field: %q", _type)
@@ -121,10 +140,52 @@ func ByOwnerField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newOwnerStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByTransactionsCount orders the results by transactions count.
+func ByTransactionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newTransactionsStep(), opts...)
+	}
+}
+
+// ByTransactions orders the results by transactions terms.
+func ByTransactions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTransactionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByBudgetsCount orders the results by budgets count.
+func ByBudgetsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newBudgetsStep(), opts...)
+	}
+}
+
+// ByBudgets orders the results by budgets terms.
+func ByBudgets(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newBudgetsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newOwnerStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(OwnerInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, OwnerTable, OwnerColumn),
+	)
+}
+func newTransactionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TransactionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, TransactionsTable, TransactionsColumn),
+	)
+}
+func newBudgetsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(BudgetsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, BudgetsTable, BudgetsColumn),
 	)
 }

@@ -32,6 +32,8 @@ const (
 	EdgeAccounts = "accounts"
 	// EdgeCategories holds the string denoting the categories edge name in mutations.
 	EdgeCategories = "categories"
+	// EdgeBudgets holds the string denoting the budgets edge name in mutations.
+	EdgeBudgets = "budgets"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// SessionsTable is the table that holds the sessions relation/edge.
@@ -55,6 +57,13 @@ const (
 	CategoriesInverseTable = "categories"
 	// CategoriesColumn is the table column denoting the categories relation/edge.
 	CategoriesColumn = "user_id"
+	// BudgetsTable is the table that holds the budgets relation/edge.
+	BudgetsTable = "budgets"
+	// BudgetsInverseTable is the table name for the Budget entity.
+	// It exists in this package in order to avoid circular dependency with the "budget" package.
+	BudgetsInverseTable = "budgets"
+	// BudgetsColumn is the table column denoting the budgets relation/edge.
+	BudgetsColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -174,6 +183,20 @@ func ByCategories(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newCategoriesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByBudgetsCount orders the results by budgets count.
+func ByBudgetsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newBudgetsStep(), opts...)
+	}
+}
+
+// ByBudgets orders the results by budgets terms.
+func ByBudgets(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newBudgetsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newSessionsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -193,5 +216,12 @@ func newCategoriesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(CategoriesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, CategoriesTable, CategoriesColumn),
+	)
+}
+func newBudgetsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(BudgetsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, BudgetsTable, BudgetsColumn),
 	)
 }

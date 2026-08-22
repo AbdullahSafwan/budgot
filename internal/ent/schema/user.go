@@ -35,5 +35,8 @@ func (User) Edges() []ent.Edge {
 		edge.To("categories", Category.Type).
 			StorageKey(edge.Column("user_id")).
 			Annotations(entsql.Annotation{OnDelete: entsql.Cascade}),
+		edge.To("budgets", Budget.Type).
+			StorageKey(edge.Column("user_id")).
+			Annotations(entsql.Annotation{OnDelete: entsql.Cascade}),
 	}
 }

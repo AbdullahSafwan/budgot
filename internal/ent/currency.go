@@ -34,9 +34,11 @@ type Currency struct {
 type CurrencyEdges struct {
 	// Accounts holds the value of the accounts edge.
 	Accounts []*Account `json:"accounts,omitempty"`
+	// Budgets holds the value of the budgets edge.
+	Budgets []*Budget `json:"budgets,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // AccountsOrErr returns the Accounts value or an error if the edge
@@ -46,6 +48,15 @@ func (e CurrencyEdges) AccountsOrErr() ([]*Account, error) {
 		return e.Accounts, nil
 	}
 	return nil, &NotLoadedError{edge: "accounts"}
+}
+
+// BudgetsOrErr returns the Budgets value or an error if the edge
+// was not loaded in eager-loading.
+func (e CurrencyEdges) BudgetsOrErr() ([]*Budget, error) {
+	if e.loadedTypes[1] {
+		return e.Budgets, nil
+	}
+	return nil, &NotLoadedError{edge: "budgets"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -118,6 +129,11 @@ func (_m *Currency) Value(name string) (ent.Value, error) {
 // QueryAccounts queries the "accounts" edge of the Currency entity.
 func (_m *Currency) QueryAccounts() *AccountQuery {
 	return NewCurrencyClient(_m.config).QueryAccounts(_m)
+}
+
+// QueryBudgets queries the "budgets" edge of the Currency entity.
+func (_m *Currency) QueryBudgets() *BudgetQuery {
+	return NewCurrencyClient(_m.config).QueryBudgets(_m)
 }
 
 // Update returns a builder for updating this Currency.

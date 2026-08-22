@@ -43,9 +43,11 @@ type UserEdges struct {
 	Accounts []*Account `json:"accounts,omitempty"`
 	// Categories holds the value of the categories edge.
 	Categories []*Category `json:"categories,omitempty"`
+	// Budgets holds the value of the budgets edge.
+	Budgets []*Budget `json:"budgets,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // SessionsOrErr returns the Sessions value or an error if the edge
@@ -73,6 +75,15 @@ func (e UserEdges) CategoriesOrErr() ([]*Category, error) {
 		return e.Categories, nil
 	}
 	return nil, &NotLoadedError{edge: "categories"}
+}
+
+// BudgetsOrErr returns the Budgets value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) BudgetsOrErr() ([]*Budget, error) {
+	if e.loadedTypes[3] {
+		return e.Budgets, nil
+	}
+	return nil, &NotLoadedError{edge: "budgets"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -171,6 +182,11 @@ func (_m *User) QueryAccounts() *AccountQuery {
 // QueryCategories queries the "categories" edge of the User entity.
 func (_m *User) QueryCategories() *CategoryQuery {
 	return NewUserClient(_m.config).QueryCategories(_m)
+}
+
+// QueryBudgets queries the "budgets" edge of the User entity.
+func (_m *User) QueryBudgets() *BudgetQuery {
+	return NewUserClient(_m.config).QueryBudgets(_m)
 }
 
 // Update returns a builder for updating this User.

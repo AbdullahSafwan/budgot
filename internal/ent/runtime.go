@@ -4,12 +4,14 @@ package ent
 
 import (
 	"budgot/internal/ent/account"
+	"budgot/internal/ent/budget"
 	"budgot/internal/ent/category"
 	"budgot/internal/ent/country"
 	"budgot/internal/ent/currency"
 	"budgot/internal/ent/loginattempt"
 	"budgot/internal/ent/schema"
 	"budgot/internal/ent/session"
+	"budgot/internal/ent/transaction"
 	"budgot/internal/ent/user"
 	"time"
 )
@@ -34,6 +36,26 @@ func init() {
 	account.DefaultUpdatedAt = accountDescUpdatedAt.Default.(func() time.Time)
 	// account.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	account.UpdateDefaultUpdatedAt = accountDescUpdatedAt.UpdateDefault.(func() time.Time)
+	budgetFields := schema.Budget{}.Fields()
+	_ = budgetFields
+	// budgetDescMonth is the schema descriptor for month field.
+	budgetDescMonth := budgetFields[0].Descriptor()
+	// budget.MonthValidator is a validator for the "month" field. It is called by the builders before save.
+	budget.MonthValidator = func() func(int) error {
+		validators := budgetDescMonth.Validators
+		fns := [...]func(int) error{
+			validators[0].(func(int) error),
+			validators[1].(func(int) error),
+		}
+		return func(month int) error {
+			for _, fn := range fns {
+				if err := fn(month); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	categoryFields := schema.Category{}.Fields()
 	_ = categoryFields
 	// categoryDescName is the schema descriptor for name field.
@@ -100,6 +122,12 @@ func init() {
 	sessionDescID := sessionFields[0].Descriptor()
 	// session.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	session.IDValidator = sessionDescID.Validators[0].(func(string) error)
+	transactionFields := schema.Transaction{}.Fields()
+	_ = transactionFields
+	// transactionDescCreatedAt is the schema descriptor for created_at field.
+	transactionDescCreatedAt := transactionFields[4].Descriptor()
+	// transaction.DefaultCreatedAt holds the default value on creation for the created_at field.
+	transaction.DefaultCreatedAt = transactionDescCreatedAt.Default.(func() time.Time)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescUsername is the schema descriptor for username field.

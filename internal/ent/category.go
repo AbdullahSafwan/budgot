@@ -34,9 +34,13 @@ type Category struct {
 type CategoryEdges struct {
 	// Owner holds the value of the owner edge.
 	Owner *User `json:"owner,omitempty"`
+	// Transactions holds the value of the transactions edge.
+	Transactions []*Transaction `json:"transactions,omitempty"`
+	// Budgets holds the value of the budgets edge.
+	Budgets []*Budget `json:"budgets,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [3]bool
 }
 
 // OwnerOrErr returns the Owner value or an error if the edge
@@ -48,6 +52,24 @@ func (e CategoryEdges) OwnerOrErr() (*User, error) {
 		return nil, &NotFoundError{label: user.Label}
 	}
 	return nil, &NotLoadedError{edge: "owner"}
+}
+
+// TransactionsOrErr returns the Transactions value or an error if the edge
+// was not loaded in eager-loading.
+func (e CategoryEdges) TransactionsOrErr() ([]*Transaction, error) {
+	if e.loadedTypes[1] {
+		return e.Transactions, nil
+	}
+	return nil, &NotLoadedError{edge: "transactions"}
+}
+
+// BudgetsOrErr returns the Budgets value or an error if the edge
+// was not loaded in eager-loading.
+func (e CategoryEdges) BudgetsOrErr() ([]*Budget, error) {
+	if e.loadedTypes[2] {
+		return e.Budgets, nil
+	}
+	return nil, &NotLoadedError{edge: "budgets"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -123,6 +145,16 @@ func (_m *Category) Value(name string) (ent.Value, error) {
 // QueryOwner queries the "owner" edge of the Category entity.
 func (_m *Category) QueryOwner() *UserQuery {
 	return NewCategoryClient(_m.config).QueryOwner(_m)
+}
+
+// QueryTransactions queries the "transactions" edge of the Category entity.
+func (_m *Category) QueryTransactions() *TransactionQuery {
+	return NewCategoryClient(_m.config).QueryTransactions(_m)
+}
+
+// QueryBudgets queries the "budgets" edge of the Category entity.
+func (_m *Category) QueryBudgets() *BudgetQuery {
+	return NewCategoryClient(_m.config).QueryBudgets(_m)
 }
 
 // Update returns a builder for updating this Category.

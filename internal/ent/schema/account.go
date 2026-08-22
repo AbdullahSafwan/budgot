@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
@@ -28,5 +29,8 @@ func (Account) Edges() []ent.Edge {
 		edge.From("owner", User.Type).Ref("accounts").Unique().Required(),
 		edge.From("country", Country.Type).Ref("accounts").Unique().Required(),
 		edge.From("currency", Currency.Type).Ref("accounts").Unique().Required(),
+		edge.To("transactions", Transaction.Type).
+			StorageKey(edge.Column("account_id")).
+			Annotations(entsql.Annotation{OnDelete: entsql.Cascade}),
 	}
 }

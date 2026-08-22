@@ -4,6 +4,7 @@ package ent
 
 import (
 	"budgot/internal/ent/account"
+	"budgot/internal/ent/budget"
 	"budgot/internal/ent/category"
 	"budgot/internal/ent/predicate"
 	"budgot/internal/ent/session"
@@ -29,6 +30,7 @@ type UserQuery struct {
 	withSessions   *SessionQuery
 	withAccounts   *AccountQuery
 	withCategories *CategoryQuery
+	withBudgets    *BudgetQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -124,6 +126,28 @@ func (_q *UserQuery) QueryCategories() *CategoryQuery {
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(category.Table, category.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.CategoriesTable, user.CategoriesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryBudgets chains the current query on the "budgets" edge.
+func (_q *UserQuery) QueryBudgets() *BudgetQuery {
+	query := (&BudgetClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(budget.Table, budget.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.BudgetsTable, user.BudgetsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -326,6 +350,7 @@ func (_q *UserQuery) Clone() *UserQuery {
 		withSessions:   _q.withSessions.Clone(),
 		withAccounts:   _q.withAccounts.Clone(),
 		withCategories: _q.withCategories.Clone(),
+		withBudgets:    _q.withBudgets.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -362,6 +387,17 @@ func (_q *UserQuery) WithCategories(opts ...func(*CategoryQuery)) *UserQuery {
 		opt(query)
 	}
 	_q.withCategories = query
+	return _q
+}
+
+// WithBudgets tells the query-builder to eager-load the nodes that are connected to
+// the "budgets" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithBudgets(opts ...func(*BudgetQuery)) *UserQuery {
+	query := (&BudgetClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withBudgets = query
 	return _q
 }
 
@@ -443,10 +479,11 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = _q.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			_q.withSessions != nil,
 			_q.withAccounts != nil,
 			_q.withCategories != nil,
+			_q.withBudgets != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -485,6 +522,13 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := _q.loadCategories(ctx, query, nodes,
 			func(n *User) { n.Edges.Categories = []*Category{} },
 			func(n *User, e *Category) { n.Edges.Categories = append(n.Edges.Categories, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withBudgets; query != nil {
+		if err := _q.loadBudgets(ctx, query, nodes,
+			func(n *User) { n.Edges.Budgets = []*Budget{} },
+			func(n *User, e *Budget) { n.Edges.Budgets = append(n.Edges.Budgets, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -566,6 +610,37 @@ func (_q *UserQuery) loadCategories(ctx context.Context, query *CategoryQuery, n
 	query.withFKs = true
 	query.Where(predicate.Category(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(user.CategoriesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.user_id
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "user_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadBudgets(ctx context.Context, query *BudgetQuery, nodes []*User, init func(*User), assign func(*User, *Budget)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Budget(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.BudgetsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

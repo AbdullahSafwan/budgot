@@ -20,5 +20,6 @@ func (Country) Fields() []ent.Field {
 func (Country) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("accounts", Account.Type).StorageKey(edge.Column("country_id")),
+		edge.To("budgets", Budget.Type).StorageKey(edge.Column("country_id")),
 	}
 }

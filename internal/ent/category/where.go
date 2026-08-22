@@ -237,6 +237,52 @@ func HasOwnerWith(preds ...predicate.User) predicate.Category {
 	})
 }
 
+// HasTransactions applies the HasEdge predicate on the "transactions" edge.
+func HasTransactions() predicate.Category {
+	return predicate.Category(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, TransactionsTable, TransactionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTransactionsWith applies the HasEdge predicate on the "transactions" edge with a given conditions (other predicates).
+func HasTransactionsWith(preds ...predicate.Transaction) predicate.Category {
+	return predicate.Category(func(s *sql.Selector) {
+		step := newTransactionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasBudgets applies the HasEdge predicate on the "budgets" edge.
+func HasBudgets() predicate.Category {
+	return predicate.Category(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, BudgetsTable, BudgetsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasBudgetsWith applies the HasEdge predicate on the "budgets" edge with a given conditions (other predicates).
+func HasBudgetsWith(preds ...predicate.Budget) predicate.Category {
+	return predicate.Category(func(s *sql.Selector) {
+		step := newBudgetsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Category) predicate.Category {
 	return predicate.Category(sql.AndPredicates(predicates...))

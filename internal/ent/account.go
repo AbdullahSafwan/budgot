@@ -45,9 +45,11 @@ type AccountEdges struct {
 	Country *Country `json:"country,omitempty"`
 	// Currency holds the value of the currency edge.
 	Currency *Currency `json:"currency,omitempty"`
+	// Transactions holds the value of the transactions edge.
+	Transactions []*Transaction `json:"transactions,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // OwnerOrErr returns the Owner value or an error if the edge
@@ -81,6 +83,15 @@ func (e AccountEdges) CurrencyOrErr() (*Currency, error) {
 		return nil, &NotFoundError{label: currency.Label}
 	}
 	return nil, &NotLoadedError{edge: "currency"}
+}
+
+// TransactionsOrErr returns the Transactions value or an error if the edge
+// was not loaded in eager-loading.
+func (e AccountEdges) TransactionsOrErr() ([]*Transaction, error) {
+	if e.loadedTypes[3] {
+		return e.Transactions, nil
+	}
+	return nil, &NotLoadedError{edge: "transactions"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -192,6 +203,11 @@ func (_m *Account) QueryCountry() *CountryQuery {
 // QueryCurrency queries the "currency" edge of the Account entity.
 func (_m *Account) QueryCurrency() *CurrencyQuery {
 	return NewAccountClient(_m.config).QueryCurrency(_m)
+}
+
+// QueryTransactions queries the "transactions" edge of the Account entity.
+func (_m *Account) QueryTransactions() *TransactionQuery {
+	return NewAccountClient(_m.config).QueryTransactions(_m)
 }
 
 // Update returns a builder for updating this Account.
