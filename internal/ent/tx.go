@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// Account is the client for interacting with the Account builders.
 	Account *AccountClient
+	// Category is the client for interacting with the Category builders.
+	Category *CategoryClient
 	// Country is the client for interacting with the Country builders.
 	Country *CountryClient
 	// Currency is the client for interacting with the Currency builders.
@@ -156,6 +158,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Account = NewAccountClient(tx.config)
+	tx.Category = NewCategoryClient(tx.config)
 	tx.Country = NewCountryClient(tx.config)
 	tx.Currency = NewCurrencyClient(tx.config)
 	tx.LoginAttempt = NewLoginAttemptClient(tx.config)

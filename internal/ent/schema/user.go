@@ -9,12 +9,10 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// User holds the schema definition for the User entity.
 type User struct {
 	ent.Schema
 }
 
-// Fields of the User.
 func (User) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("username").NotEmpty().Unique(),
@@ -26,13 +24,15 @@ func (User) Fields() []ent.Field {
 	}
 }
 
-// Edges of the User.
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("sessions", Session.Type).
 			StorageKey(edge.Column("user_id")).
 			Annotations(entsql.Annotation{OnDelete: entsql.Cascade}),
 		edge.To("accounts", Account.Type).
+			StorageKey(edge.Column("user_id")).
+			Annotations(entsql.Annotation{OnDelete: entsql.Cascade}),
+		edge.To("categories", Category.Type).
 			StorageKey(edge.Column("user_id")).
 			Annotations(entsql.Annotation{OnDelete: entsql.Cascade}),
 	}

@@ -4,6 +4,7 @@ package ent
 
 import (
 	"budgot/internal/ent/account"
+	"budgot/internal/ent/category"
 	"budgot/internal/ent/session"
 	"budgot/internal/ent/user"
 	"context"
@@ -110,6 +111,21 @@ func (_c *UserCreate) AddAccounts(v ...*Account) *UserCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddAccountIDs(ids...)
+}
+
+// AddCategoryIDs adds the "categories" edge to the Category entity by IDs.
+func (_c *UserCreate) AddCategoryIDs(ids ...int) *UserCreate {
+	_c.mutation.AddCategoryIDs(ids...)
+	return _c
+}
+
+// AddCategories adds the "categories" edges to the Category entity.
+func (_c *UserCreate) AddCategories(v ...*Category) *UserCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddCategoryIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -271,6 +287,22 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.CategoriesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CategoriesTable,
+			Columns: []string{user.CategoriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(category.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

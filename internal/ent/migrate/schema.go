@@ -45,6 +45,28 @@ var (
 			},
 		},
 	}
+	// CategoriesColumns holds the columns for the "categories" table.
+	CategoriesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"income", "expense"}},
+		{Name: "color", Type: field.TypeString},
+		{Name: "user_id", Type: field.TypeInt},
+	}
+	// CategoriesTable holds the schema information for the "categories" table.
+	CategoriesTable = &schema.Table{
+		Name:       "categories",
+		Columns:    CategoriesColumns,
+		PrimaryKey: []*schema.Column{CategoriesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "categories_users_categories",
+				Columns:    []*schema.Column{CategoriesColumns[4]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// CountriesColumns holds the columns for the "countries" table.
 	CountriesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -128,6 +150,7 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		AccountsTable,
+		CategoriesTable,
 		CountriesTable,
 		CurrenciesTable,
 		LoginAttemptsTable,
@@ -140,5 +163,6 @@ func init() {
 	AccountsTable.ForeignKeys[0].RefTable = CountriesTable
 	AccountsTable.ForeignKeys[1].RefTable = CurrenciesTable
 	AccountsTable.ForeignKeys[2].RefTable = UsersTable
+	CategoriesTable.ForeignKeys[0].RefTable = UsersTable
 	SessionsTable.ForeignKeys[0].RefTable = UsersTable
 }

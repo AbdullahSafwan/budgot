@@ -4,6 +4,7 @@ package ent
 
 import (
 	"budgot/internal/ent/account"
+	"budgot/internal/ent/category"
 	"budgot/internal/ent/country"
 	"budgot/internal/ent/currency"
 	"budgot/internal/ent/loginattempt"
@@ -33,6 +34,16 @@ func init() {
 	account.DefaultUpdatedAt = accountDescUpdatedAt.Default.(func() time.Time)
 	// account.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	account.UpdateDefaultUpdatedAt = accountDescUpdatedAt.UpdateDefault.(func() time.Time)
+	categoryFields := schema.Category{}.Fields()
+	_ = categoryFields
+	// categoryDescName is the schema descriptor for name field.
+	categoryDescName := categoryFields[0].Descriptor()
+	// category.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	category.NameValidator = categoryDescName.Validators[0].(func(string) error)
+	// categoryDescColor is the schema descriptor for color field.
+	categoryDescColor := categoryFields[2].Descriptor()
+	// category.ColorValidator is a validator for the "color" field. It is called by the builders before save.
+	category.ColorValidator = categoryDescColor.Validators[0].(func(string) error)
 	countryFields := schema.Country{}.Fields()
 	_ = countryFields
 	// countryDescCode is the schema descriptor for code field.

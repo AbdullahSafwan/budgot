@@ -9,6 +9,9 @@ import (
 // Account is the predicate function for account builders.
 type Account func(*sql.Selector)
 
+// Category is the predicate function for category builders.
+type Category func(*sql.Selector)
+
 // Country is the predicate function for country builders.
 type Country func(*sql.Selector)
 

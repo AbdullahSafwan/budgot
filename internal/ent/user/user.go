@@ -30,6 +30,8 @@ const (
 	EdgeSessions = "sessions"
 	// EdgeAccounts holds the string denoting the accounts edge name in mutations.
 	EdgeAccounts = "accounts"
+	// EdgeCategories holds the string denoting the categories edge name in mutations.
+	EdgeCategories = "categories"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// SessionsTable is the table that holds the sessions relation/edge.
@@ -46,6 +48,13 @@ const (
 	AccountsInverseTable = "accounts"
 	// AccountsColumn is the table column denoting the accounts relation/edge.
 	AccountsColumn = "user_id"
+	// CategoriesTable is the table that holds the categories relation/edge.
+	CategoriesTable = "categories"
+	// CategoriesInverseTable is the table name for the Category entity.
+	// It exists in this package in order to avoid circular dependency with the "category" package.
+	CategoriesInverseTable = "categories"
+	// CategoriesColumn is the table column denoting the categories relation/edge.
+	CategoriesColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -151,6 +160,20 @@ func ByAccounts(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newAccountsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByCategoriesCount orders the results by categories count.
+func ByCategoriesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newCategoriesStep(), opts...)
+	}
+}
+
+// ByCategories orders the results by categories terms.
+func ByCategories(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCategoriesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newSessionsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -163,5 +186,12 @@ func newAccountsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(AccountsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, AccountsTable, AccountsColumn),
+	)
+}
+func newCategoriesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CategoriesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, CategoriesTable, CategoriesColumn),
 	)
 }
