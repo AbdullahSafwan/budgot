@@ -28,7 +28,7 @@ type AttemptRecorder interface {
 	Record(ctx context.Context, username, ipAddress string, success bool) error
 }
 
-func LoginHandler(users UserFinder, sessions SessionCreator, attempts AttemptRecorder) http.HandlerFunc {
+func LoginHandler(users UserFinder, sessions SessionCreator, attempts AttemptRecorder, useHTTPS bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		username := r.FormValue("username")
 		password := r.FormValue("password")
@@ -78,7 +78,7 @@ func LoginHandler(users UserFinder, sessions SessionCreator, attempts AttemptRec
 			Value:    hex.EncodeToString(token),
 			Path:     "/",
 			HttpOnly: true,
-			Secure:   true,
+			Secure:   useHTTPS,
 			SameSite: http.SameSiteLaxMode,
 			Expires:  now.Add(7 * 24 * time.Hour),
 		})
@@ -97,7 +97,7 @@ type SessionDeleter interface {
 	Delete(ctx context.Context, id string) error
 }
 
-func LogoutHandler(sessions SessionDeleter) http.HandlerFunc {
+func LogoutHandler(sessions SessionDeleter, useHTTPS bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("session")
 		if err != nil {
@@ -117,7 +117,7 @@ func LogoutHandler(sessions SessionDeleter) http.HandlerFunc {
 			Value:    "",
 			Path:     "/",
 			HttpOnly: true,
-			Secure:   true,
+			Secure:   useHTTPS,
 			SameSite: http.SameSiteLaxMode,
 			MaxAge:   -1,
 		})

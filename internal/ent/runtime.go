@@ -3,9 +3,15 @@
 package ent
 
 import (
+	"budgot/internal/ent/account"
+	"budgot/internal/ent/budget"
+	"budgot/internal/ent/category"
+	"budgot/internal/ent/country"
+	"budgot/internal/ent/currency"
 	"budgot/internal/ent/loginattempt"
 	"budgot/internal/ent/schema"
 	"budgot/internal/ent/session"
+	"budgot/internal/ent/transaction"
 	"budgot/internal/ent/user"
 	"time"
 )
@@ -14,6 +20,76 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	accountFields := schema.Account{}.Fields()
+	_ = accountFields
+	// accountDescName is the schema descriptor for name field.
+	accountDescName := accountFields[0].Descriptor()
+	// account.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	account.NameValidator = accountDescName.Validators[0].(func(string) error)
+	// accountDescCreatedAt is the schema descriptor for created_at field.
+	accountDescCreatedAt := accountFields[2].Descriptor()
+	// account.DefaultCreatedAt holds the default value on creation for the created_at field.
+	account.DefaultCreatedAt = accountDescCreatedAt.Default.(func() time.Time)
+	// accountDescUpdatedAt is the schema descriptor for updated_at field.
+	accountDescUpdatedAt := accountFields[3].Descriptor()
+	// account.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	account.DefaultUpdatedAt = accountDescUpdatedAt.Default.(func() time.Time)
+	// account.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	account.UpdateDefaultUpdatedAt = accountDescUpdatedAt.UpdateDefault.(func() time.Time)
+	budgetFields := schema.Budget{}.Fields()
+	_ = budgetFields
+	// budgetDescMonth is the schema descriptor for month field.
+	budgetDescMonth := budgetFields[0].Descriptor()
+	// budget.MonthValidator is a validator for the "month" field. It is called by the builders before save.
+	budget.MonthValidator = func() func(int) error {
+		validators := budgetDescMonth.Validators
+		fns := [...]func(int) error{
+			validators[0].(func(int) error),
+			validators[1].(func(int) error),
+		}
+		return func(month int) error {
+			for _, fn := range fns {
+				if err := fn(month); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	categoryFields := schema.Category{}.Fields()
+	_ = categoryFields
+	// categoryDescName is the schema descriptor for name field.
+	categoryDescName := categoryFields[0].Descriptor()
+	// category.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	category.NameValidator = categoryDescName.Validators[0].(func(string) error)
+	// categoryDescColor is the schema descriptor for color field.
+	categoryDescColor := categoryFields[2].Descriptor()
+	// category.ColorValidator is a validator for the "color" field. It is called by the builders before save.
+	category.ColorValidator = categoryDescColor.Validators[0].(func(string) error)
+	countryFields := schema.Country{}.Fields()
+	_ = countryFields
+	// countryDescCode is the schema descriptor for code field.
+	countryDescCode := countryFields[0].Descriptor()
+	// country.CodeValidator is a validator for the "code" field. It is called by the builders before save.
+	country.CodeValidator = countryDescCode.Validators[0].(func(string) error)
+	// countryDescName is the schema descriptor for name field.
+	countryDescName := countryFields[1].Descriptor()
+	// country.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	country.NameValidator = countryDescName.Validators[0].(func(string) error)
+	currencyFields := schema.Currency{}.Fields()
+	_ = currencyFields
+	// currencyDescCode is the schema descriptor for code field.
+	currencyDescCode := currencyFields[0].Descriptor()
+	// currency.CodeValidator is a validator for the "code" field. It is called by the builders before save.
+	currency.CodeValidator = currencyDescCode.Validators[0].(func(string) error)
+	// currencyDescName is the schema descriptor for name field.
+	currencyDescName := currencyFields[1].Descriptor()
+	// currency.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	currency.NameValidator = currencyDescName.Validators[0].(func(string) error)
+	// currencyDescDecimalPlaces is the schema descriptor for decimal_places field.
+	currencyDescDecimalPlaces := currencyFields[3].Descriptor()
+	// currency.DefaultDecimalPlaces holds the default value on creation for the decimal_places field.
+	currency.DefaultDecimalPlaces = currencyDescDecimalPlaces.Default.(int)
 	loginattemptFields := schema.LoginAttempt{}.Fields()
 	_ = loginattemptFields
 	// loginattemptDescIPAddress is the schema descriptor for ip_address field.
@@ -46,6 +122,12 @@ func init() {
 	sessionDescID := sessionFields[0].Descriptor()
 	// session.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	session.IDValidator = sessionDescID.Validators[0].(func(string) error)
+	transactionFields := schema.Transaction{}.Fields()
+	_ = transactionFields
+	// transactionDescCreatedAt is the schema descriptor for created_at field.
+	transactionDescCreatedAt := transactionFields[4].Descriptor()
+	// transaction.DefaultCreatedAt holds the default value on creation for the created_at field.
+	transaction.DefaultCreatedAt = transactionDescCreatedAt.Default.(func() time.Time)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescUsername is the schema descriptor for username field.

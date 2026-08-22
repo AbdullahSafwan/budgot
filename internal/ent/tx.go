@@ -12,10 +12,22 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// Account is the client for interacting with the Account builders.
+	Account *AccountClient
+	// Budget is the client for interacting with the Budget builders.
+	Budget *BudgetClient
+	// Category is the client for interacting with the Category builders.
+	Category *CategoryClient
+	// Country is the client for interacting with the Country builders.
+	Country *CountryClient
+	// Currency is the client for interacting with the Currency builders.
+	Currency *CurrencyClient
 	// LoginAttempt is the client for interacting with the LoginAttempt builders.
 	LoginAttempt *LoginAttemptClient
 	// Session is the client for interacting with the Session builders.
 	Session *SessionClient
+	// Transaction is the client for interacting with the Transaction builders.
+	Transaction *TransactionClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -149,8 +161,14 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.Account = NewAccountClient(tx.config)
+	tx.Budget = NewBudgetClient(tx.config)
+	tx.Category = NewCategoryClient(tx.config)
+	tx.Country = NewCountryClient(tx.config)
+	tx.Currency = NewCurrencyClient(tx.config)
 	tx.LoginAttempt = NewLoginAttemptClient(tx.config)
 	tx.Session = NewSessionClient(tx.config)
+	tx.Transaction = NewTransactionClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 
@@ -161,7 +179,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: LoginAttempt.QueryXXX(), the query will be executed
+// applies a query, for example: Account.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

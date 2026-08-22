@@ -3,8 +3,14 @@
 package ent
 
 import (
+	"budgot/internal/ent/account"
+	"budgot/internal/ent/budget"
+	"budgot/internal/ent/category"
+	"budgot/internal/ent/country"
+	"budgot/internal/ent/currency"
 	"budgot/internal/ent/loginattempt"
 	"budgot/internal/ent/session"
+	"budgot/internal/ent/transaction"
 	"budgot/internal/ent/user"
 	"context"
 	"errors"
@@ -75,8 +81,14 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
+			account.Table:      account.ValidColumn,
+			budget.Table:       budget.ValidColumn,
+			category.Table:     category.ValidColumn,
+			country.Table:      country.ValidColumn,
+			currency.Table:     currency.ValidColumn,
 			loginattempt.Table: loginattempt.ValidColumn,
 			session.Table:      session.ValidColumn,
+			transaction.Table:  transaction.ValidColumn,
 			user.Table:         user.ValidColumn,
 		})
 	})
