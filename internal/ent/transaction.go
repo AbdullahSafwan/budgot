@@ -19,8 +19,6 @@ type Transaction struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// TransactionType holds the value of the "transaction_type" field.
-	TransactionType transaction.TransactionType `json:"transaction_type,omitempty"`
 	// Amount holds the value of the "amount" field.
 	Amount int64 `json:"amount,omitempty"`
 	// Description holds the value of the "description" field.
@@ -91,7 +89,7 @@ func (*Transaction) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case transaction.FieldID, transaction.FieldAmount:
 			values[i] = new(sql.NullInt64)
-		case transaction.FieldTransactionType, transaction.FieldDescription:
+		case transaction.FieldDescription:
 			values[i] = new(sql.NullString)
 		case transaction.FieldTransactionDate, transaction.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -122,12 +120,6 @@ func (_m *Transaction) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case transaction.FieldTransactionType:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field transaction_type", values[i])
-			} else if value.Valid {
-				_m.TransactionType = transaction.TransactionType(value.String)
-			}
 		case transaction.FieldAmount:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field amount", values[i])
@@ -224,9 +216,6 @@ func (_m *Transaction) String() string {
 	var builder strings.Builder
 	builder.WriteString("Transaction(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("transaction_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.TransactionType))
-	builder.WriteString(", ")
 	builder.WriteString("amount=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Amount))
 	builder.WriteString(", ")

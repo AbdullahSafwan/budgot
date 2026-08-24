@@ -44,6 +44,20 @@ func (_c *AccountCreate) SetNillableAccountType(v *account.AccountType) *Account
 	return _c
 }
 
+// SetIsActive sets the "is_active" field.
+func (_c *AccountCreate) SetIsActive(v bool) *AccountCreate {
+	_c.mutation.SetIsActive(v)
+	return _c
+}
+
+// SetNillableIsActive sets the "is_active" field if the given value is not nil.
+func (_c *AccountCreate) SetNillableIsActive(v *bool) *AccountCreate {
+	if v != nil {
+		_c.SetIsActive(*v)
+	}
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *AccountCreate) SetCreatedAt(v time.Time) *AccountCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -159,6 +173,10 @@ func (_c *AccountCreate) defaults() {
 		v := account.DefaultAccountType
 		_c.mutation.SetAccountType(v)
 	}
+	if _, ok := _c.mutation.IsActive(); !ok {
+		v := account.DefaultIsActive
+		_c.mutation.SetIsActive(v)
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := account.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -186,6 +204,9 @@ func (_c *AccountCreate) check() error {
 		if err := account.AccountTypeValidator(v); err != nil {
 			return &ValidationError{Name: "account_type", err: fmt.Errorf(`ent: validator failed for field "Account.account_type": %w`, err)}
 		}
+	}
+	if _, ok := _c.mutation.IsActive(); !ok {
+		return &ValidationError{Name: "is_active", err: errors.New(`ent: missing required field "Account.is_active"`)}
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Account.created_at"`)}
@@ -235,6 +256,10 @@ func (_c *AccountCreate) createSpec() (*Account, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.AccountType(); ok {
 		_spec.SetField(account.FieldAccountType, field.TypeEnum, value)
 		_node.AccountType = value
+	}
+	if value, ok := _c.mutation.IsActive(); ok {
+		_spec.SetField(account.FieldIsActive, field.TypeBool, value)
+		_node.IsActive = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(account.FieldCreatedAt, field.TypeTime, value)

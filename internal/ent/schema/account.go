@@ -19,6 +19,7 @@ func (Account) Fields() []ent.Field {
 		field.Enum("account_type").
 			Values("checking", "savings", "credit", "cash", "investment").
 			Default("checking"),
+		field.Bool("is_active").Default(true),
 		field.Time("created_at").Default(time.Now).Immutable(),
 		field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now),
 	}

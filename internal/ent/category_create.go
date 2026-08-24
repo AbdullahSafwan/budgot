@@ -40,6 +40,20 @@ func (_c *CategoryCreate) SetColor(v string) *CategoryCreate {
 	return _c
 }
 
+// SetIsActive sets the "is_active" field.
+func (_c *CategoryCreate) SetIsActive(v bool) *CategoryCreate {
+	_c.mutation.SetIsActive(v)
+	return _c
+}
+
+// SetNillableIsActive sets the "is_active" field if the given value is not nil.
+func (_c *CategoryCreate) SetNillableIsActive(v *bool) *CategoryCreate {
+	if v != nil {
+		_c.SetIsActive(*v)
+	}
+	return _c
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by ID.
 func (_c *CategoryCreate) SetOwnerID(id int) *CategoryCreate {
 	_c.mutation.SetOwnerID(id)
@@ -88,6 +102,7 @@ func (_c *CategoryCreate) Mutation() *CategoryMutation {
 
 // Save creates the Category in the database.
 func (_c *CategoryCreate) Save(ctx context.Context) (*Category, error) {
+	_c.defaults()
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -110,6 +125,14 @@ func (_c *CategoryCreate) Exec(ctx context.Context) error {
 func (_c *CategoryCreate) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (_c *CategoryCreate) defaults() {
+	if _, ok := _c.mutation.IsActive(); !ok {
+		v := category.DefaultIsActive
+		_c.mutation.SetIsActive(v)
 	}
 }
 
@@ -138,6 +161,9 @@ func (_c *CategoryCreate) check() error {
 		if err := category.ColorValidator(v); err != nil {
 			return &ValidationError{Name: "color", err: fmt.Errorf(`ent: validator failed for field "Category.color": %w`, err)}
 		}
+	}
+	if _, ok := _c.mutation.IsActive(); !ok {
+		return &ValidationError{Name: "is_active", err: errors.New(`ent: missing required field "Category.is_active"`)}
 	}
 	if len(_c.mutation.OwnerIDs()) == 0 {
 		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "Category.owner"`)}
@@ -179,6 +205,10 @@ func (_c *CategoryCreate) createSpec() (*Category, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Color(); ok {
 		_spec.SetField(category.FieldColor, field.TypeString, value)
 		_node.Color = value
+	}
+	if value, ok := _c.mutation.IsActive(); ok {
+		_spec.SetField(category.FieldIsActive, field.TypeBool, value)
+		_node.IsActive = value
 	}
 	if nodes := _c.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -250,6 +280,7 @@ func (_c *CategoryCreateBulk) Save(ctx context.Context) ([]*Category, error) {
 	for i := range _c.builders {
 		func(i int, root context.Context) {
 			builder := _c.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*CategoryMutation)
 				if !ok {

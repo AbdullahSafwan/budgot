@@ -44,20 +44,6 @@ func (_u *CategoryUpdate) SetNillableName(v *string) *CategoryUpdate {
 	return _u
 }
 
-// SetType sets the "type" field.
-func (_u *CategoryUpdate) SetType(v category.Type) *CategoryUpdate {
-	_u.mutation.SetType(v)
-	return _u
-}
-
-// SetNillableType sets the "type" field if the given value is not nil.
-func (_u *CategoryUpdate) SetNillableType(v *category.Type) *CategoryUpdate {
-	if v != nil {
-		_u.SetType(*v)
-	}
-	return _u
-}
-
 // SetColor sets the "color" field.
 func (_u *CategoryUpdate) SetColor(v string) *CategoryUpdate {
 	_u.mutation.SetColor(v)
@@ -68,6 +54,20 @@ func (_u *CategoryUpdate) SetColor(v string) *CategoryUpdate {
 func (_u *CategoryUpdate) SetNillableColor(v *string) *CategoryUpdate {
 	if v != nil {
 		_u.SetColor(*v)
+	}
+	return _u
+}
+
+// SetIsActive sets the "is_active" field.
+func (_u *CategoryUpdate) SetIsActive(v bool) *CategoryUpdate {
+	_u.mutation.SetIsActive(v)
+	return _u
+}
+
+// SetNillableIsActive sets the "is_active" field if the given value is not nil.
+func (_u *CategoryUpdate) SetNillableIsActive(v *bool) *CategoryUpdate {
+	if v != nil {
+		_u.SetIsActive(*v)
 	}
 	return _u
 }
@@ -200,11 +200,6 @@ func (_u *CategoryUpdate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Category.name": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.GetType(); ok {
-		if err := category.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Category.type": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.Color(); ok {
 		if err := category.ColorValidator(v); err != nil {
 			return &ValidationError{Name: "color", err: fmt.Errorf(`ent: validator failed for field "Category.color": %w`, err)}
@@ -231,11 +226,11 @@ func (_u *CategoryUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(category.FieldName, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.GetType(); ok {
-		_spec.SetField(category.FieldType, field.TypeEnum, value)
-	}
 	if value, ok := _u.mutation.Color(); ok {
 		_spec.SetField(category.FieldColor, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.IsActive(); ok {
+		_spec.SetField(category.FieldIsActive, field.TypeBool, value)
 	}
 	if _u.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -390,20 +385,6 @@ func (_u *CategoryUpdateOne) SetNillableName(v *string) *CategoryUpdateOne {
 	return _u
 }
 
-// SetType sets the "type" field.
-func (_u *CategoryUpdateOne) SetType(v category.Type) *CategoryUpdateOne {
-	_u.mutation.SetType(v)
-	return _u
-}
-
-// SetNillableType sets the "type" field if the given value is not nil.
-func (_u *CategoryUpdateOne) SetNillableType(v *category.Type) *CategoryUpdateOne {
-	if v != nil {
-		_u.SetType(*v)
-	}
-	return _u
-}
-
 // SetColor sets the "color" field.
 func (_u *CategoryUpdateOne) SetColor(v string) *CategoryUpdateOne {
 	_u.mutation.SetColor(v)
@@ -414,6 +395,20 @@ func (_u *CategoryUpdateOne) SetColor(v string) *CategoryUpdateOne {
 func (_u *CategoryUpdateOne) SetNillableColor(v *string) *CategoryUpdateOne {
 	if v != nil {
 		_u.SetColor(*v)
+	}
+	return _u
+}
+
+// SetIsActive sets the "is_active" field.
+func (_u *CategoryUpdateOne) SetIsActive(v bool) *CategoryUpdateOne {
+	_u.mutation.SetIsActive(v)
+	return _u
+}
+
+// SetNillableIsActive sets the "is_active" field if the given value is not nil.
+func (_u *CategoryUpdateOne) SetNillableIsActive(v *bool) *CategoryUpdateOne {
+	if v != nil {
+		_u.SetIsActive(*v)
 	}
 	return _u
 }
@@ -559,11 +554,6 @@ func (_u *CategoryUpdateOne) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Category.name": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.GetType(); ok {
-		if err := category.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Category.type": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.Color(); ok {
 		if err := category.ColorValidator(v); err != nil {
 			return &ValidationError{Name: "color", err: fmt.Errorf(`ent: validator failed for field "Category.color": %w`, err)}
@@ -607,11 +597,11 @@ func (_u *CategoryUpdateOne) sqlSave(ctx context.Context) (_node *Category, err 
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(category.FieldName, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.GetType(); ok {
-		_spec.SetField(category.FieldType, field.TypeEnum, value)
-	}
 	if value, ok := _u.mutation.Color(); ok {
 		_spec.SetField(category.FieldColor, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.IsActive(); ok {
+		_spec.SetField(category.FieldIsActive, field.TypeBool, value)
 	}
 	if _u.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{

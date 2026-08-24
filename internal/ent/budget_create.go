@@ -11,6 +11,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -38,6 +39,34 @@ func (_c *BudgetCreate) SetYear(v int) *BudgetCreate {
 // SetAmount sets the "amount" field.
 func (_c *BudgetCreate) SetAmount(v int64) *BudgetCreate {
 	_c.mutation.SetAmount(v)
+	return _c
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (_c *BudgetCreate) SetCreatedAt(v time.Time) *BudgetCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *BudgetCreate) SetNillableCreatedAt(v *time.Time) *BudgetCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_c *BudgetCreate) SetUpdatedAt(v time.Time) *BudgetCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_c *BudgetCreate) SetNillableUpdatedAt(v *time.Time) *BudgetCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
+	}
 	return _c
 }
 
@@ -92,6 +121,7 @@ func (_c *BudgetCreate) Mutation() *BudgetMutation {
 
 // Save creates the Budget in the database.
 func (_c *BudgetCreate) Save(ctx context.Context) (*Budget, error) {
+	_c.defaults()
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -117,6 +147,18 @@ func (_c *BudgetCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (_c *BudgetCreate) defaults() {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		v := budget.DefaultCreatedAt()
+		_c.mutation.SetCreatedAt(v)
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		v := budget.DefaultUpdatedAt()
+		_c.mutation.SetUpdatedAt(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (_c *BudgetCreate) check() error {
 	if _, ok := _c.mutation.Month(); !ok {
@@ -137,6 +179,12 @@ func (_c *BudgetCreate) check() error {
 		if err := budget.AmountValidator(v); err != nil {
 			return &ValidationError{Name: "amount", err: fmt.Errorf(`ent: validator failed for field "Budget.amount": %w`, err)}
 		}
+	}
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Budget.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Budget.updated_at"`)}
 	}
 	if len(_c.mutation.OwnerIDs()) == 0 {
 		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "Budget.owner"`)}
@@ -187,6 +235,14 @@ func (_c *BudgetCreate) createSpec() (*Budget, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Amount(); ok {
 		_spec.SetField(budget.FieldAmount, field.TypeInt64, value)
 		_node.Amount = value
+	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(budget.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.UpdatedAt(); ok {
+		_spec.SetField(budget.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
 	}
 	if nodes := _c.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -277,6 +333,7 @@ func (_c *BudgetCreateBulk) Save(ctx context.Context) ([]*Budget, error) {
 	for i := range _c.builders {
 		func(i int, root context.Context) {
 			builder := _c.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*BudgetMutation)
 				if !ok {

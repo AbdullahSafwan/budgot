@@ -24,6 +24,8 @@ type Account struct {
 	Name string `json:"name,omitempty"`
 	// AccountType holds the value of the "account_type" field.
 	AccountType account.AccountType `json:"account_type,omitempty"`
+	// IsActive holds the value of the "is_active" field.
+	IsActive bool `json:"is_active,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -99,6 +101,8 @@ func (*Account) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case account.FieldIsActive:
+			values[i] = new(sql.NullBool)
 		case account.FieldID:
 			values[i] = new(sql.NullInt64)
 		case account.FieldName, account.FieldAccountType:
@@ -143,6 +147,12 @@ func (_m *Account) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field account_type", values[i])
 			} else if value.Valid {
 				_m.AccountType = account.AccountType(value.String)
+			}
+		case account.FieldIsActive:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_active", values[i])
+			} else if value.Valid {
+				_m.IsActive = value.Bool
 			}
 		case account.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -238,6 +248,9 @@ func (_m *Account) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("account_type=")
 	builder.WriteString(fmt.Sprintf("%v", _m.AccountType))
+	builder.WriteString(", ")
+	builder.WriteString("is_active=")
+	builder.WriteString(fmt.Sprintf("%v", _m.IsActive))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

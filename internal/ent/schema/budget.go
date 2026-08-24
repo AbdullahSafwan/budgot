@@ -1,6 +1,8 @@
 package schema
 
 import (
+	"time"
+
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -16,6 +18,8 @@ func (Budget) Fields() []ent.Field {
 		field.Int("month").Min(1).Max(12),
 		field.Int("year"),
 		field.Int64("amount").NonNegative(),
+		field.Time("created_at").Default(time.Now).Immutable(),
+		field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now),
 	}
 }
 

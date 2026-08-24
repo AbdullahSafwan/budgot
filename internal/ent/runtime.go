@@ -26,12 +26,16 @@ func init() {
 	accountDescName := accountFields[0].Descriptor()
 	// account.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	account.NameValidator = accountDescName.Validators[0].(func(string) error)
+	// accountDescIsActive is the schema descriptor for is_active field.
+	accountDescIsActive := accountFields[2].Descriptor()
+	// account.DefaultIsActive holds the default value on creation for the is_active field.
+	account.DefaultIsActive = accountDescIsActive.Default.(bool)
 	// accountDescCreatedAt is the schema descriptor for created_at field.
-	accountDescCreatedAt := accountFields[2].Descriptor()
+	accountDescCreatedAt := accountFields[3].Descriptor()
 	// account.DefaultCreatedAt holds the default value on creation for the created_at field.
 	account.DefaultCreatedAt = accountDescCreatedAt.Default.(func() time.Time)
 	// accountDescUpdatedAt is the schema descriptor for updated_at field.
-	accountDescUpdatedAt := accountFields[3].Descriptor()
+	accountDescUpdatedAt := accountFields[4].Descriptor()
 	// account.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	account.DefaultUpdatedAt = accountDescUpdatedAt.Default.(func() time.Time)
 	// account.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -60,6 +64,16 @@ func init() {
 	budgetDescAmount := budgetFields[2].Descriptor()
 	// budget.AmountValidator is a validator for the "amount" field. It is called by the builders before save.
 	budget.AmountValidator = budgetDescAmount.Validators[0].(func(int64) error)
+	// budgetDescCreatedAt is the schema descriptor for created_at field.
+	budgetDescCreatedAt := budgetFields[3].Descriptor()
+	// budget.DefaultCreatedAt holds the default value on creation for the created_at field.
+	budget.DefaultCreatedAt = budgetDescCreatedAt.Default.(func() time.Time)
+	// budgetDescUpdatedAt is the schema descriptor for updated_at field.
+	budgetDescUpdatedAt := budgetFields[4].Descriptor()
+	// budget.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	budget.DefaultUpdatedAt = budgetDescUpdatedAt.Default.(func() time.Time)
+	// budget.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	budget.UpdateDefaultUpdatedAt = budgetDescUpdatedAt.UpdateDefault.(func() time.Time)
 	categoryFields := schema.Category{}.Fields()
 	_ = categoryFields
 	// categoryDescName is the schema descriptor for name field.
@@ -70,6 +84,10 @@ func init() {
 	categoryDescColor := categoryFields[2].Descriptor()
 	// category.ColorValidator is a validator for the "color" field. It is called by the builders before save.
 	category.ColorValidator = categoryDescColor.Validators[0].(func(string) error)
+	// categoryDescIsActive is the schema descriptor for is_active field.
+	categoryDescIsActive := categoryFields[3].Descriptor()
+	// category.DefaultIsActive holds the default value on creation for the is_active field.
+	category.DefaultIsActive = categoryDescIsActive.Default.(bool)
 	countryFields := schema.Country{}.Fields()
 	_ = countryFields
 	// countryDescCode is the schema descriptor for code field.
@@ -129,7 +147,7 @@ func init() {
 	transactionFields := schema.Transaction{}.Fields()
 	_ = transactionFields
 	// transactionDescCreatedAt is the schema descriptor for created_at field.
-	transactionDescCreatedAt := transactionFields[4].Descriptor()
+	transactionDescCreatedAt := transactionFields[3].Descriptor()
 	// transaction.DefaultCreatedAt holds the default value on creation for the created_at field.
 	transaction.DefaultCreatedAt = transactionDescCreatedAt.Default.(func() time.Time)
 	userFields := schema.User{}.Fields()

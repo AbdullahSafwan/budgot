@@ -60,6 +60,20 @@ func (_u *AccountUpdate) SetNillableAccountType(v *account.AccountType) *Account
 	return _u
 }
 
+// SetIsActive sets the "is_active" field.
+func (_u *AccountUpdate) SetIsActive(v bool) *AccountUpdate {
+	_u.mutation.SetIsActive(v)
+	return _u
+}
+
+// SetNillableIsActive sets the "is_active" field if the given value is not nil.
+func (_u *AccountUpdate) SetNillableIsActive(v *bool) *AccountUpdate {
+	if v != nil {
+		_u.SetIsActive(*v)
+	}
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *AccountUpdate) SetUpdatedAt(v time.Time) *AccountUpdate {
 	_u.mutation.SetUpdatedAt(v)
@@ -235,6 +249,9 @@ func (_u *AccountUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.AccountType(); ok {
 		_spec.SetField(account.FieldAccountType, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.IsActive(); ok {
+		_spec.SetField(account.FieldIsActive, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(account.FieldUpdatedAt, field.TypeTime, value)
@@ -415,6 +432,20 @@ func (_u *AccountUpdateOne) SetAccountType(v account.AccountType) *AccountUpdate
 func (_u *AccountUpdateOne) SetNillableAccountType(v *account.AccountType) *AccountUpdateOne {
 	if v != nil {
 		_u.SetAccountType(*v)
+	}
+	return _u
+}
+
+// SetIsActive sets the "is_active" field.
+func (_u *AccountUpdateOne) SetIsActive(v bool) *AccountUpdateOne {
+	_u.mutation.SetIsActive(v)
+	return _u
+}
+
+// SetNillableIsActive sets the "is_active" field if the given value is not nil.
+func (_u *AccountUpdateOne) SetNillableIsActive(v *bool) *AccountUpdateOne {
+	if v != nil {
+		_u.SetIsActive(*v)
 	}
 	return _u
 }
@@ -624,6 +655,9 @@ func (_u *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err er
 	}
 	if value, ok := _u.mutation.AccountType(); ok {
 		_spec.SetField(account.FieldAccountType, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.IsActive(); ok {
+		_spec.SetField(account.FieldIsActive, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(account.FieldUpdatedAt, field.TypeTime, value)

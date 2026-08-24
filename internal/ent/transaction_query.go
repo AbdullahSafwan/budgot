@@ -370,12 +370,12 @@ func (_q *TransactionQuery) WithLinkedTransaction(opts ...func(*TransactionQuery
 // Example:
 //
 //	var v []struct {
-//		TransactionType transaction.TransactionType `json:"transaction_type,omitempty"`
+//		Amount int64 `json:"amount,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Transaction.Query().
-//		GroupBy(transaction.FieldTransactionType).
+//		GroupBy(transaction.FieldAmount).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *TransactionQuery) GroupBy(field string, fields ...string) *TransactionGroupBy {
@@ -393,11 +393,11 @@ func (_q *TransactionQuery) GroupBy(field string, fields ...string) *Transaction
 // Example:
 //
 //	var v []struct {
-//		TransactionType transaction.TransactionType `json:"transaction_type,omitempty"`
+//		Amount int64 `json:"amount,omitempty"`
 //	}
 //
 //	client.Transaction.Query().
-//		Select(transaction.FieldTransactionType).
+//		Select(transaction.FieldAmount).
 //		Scan(ctx, &v)
 func (_q *TransactionQuery) Select(fields ...string) *TransactionSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

@@ -60,6 +60,11 @@ func Name(v string) predicate.Account {
 	return predicate.Account(sql.FieldEQ(FieldName, v))
 }
 
+// IsActive applies equality check predicate on the "is_active" field. It's identical to IsActiveEQ.
+func IsActive(v bool) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldIsActive, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.Account {
 	return predicate.Account(sql.FieldEQ(FieldCreatedAt, v))
@@ -153,6 +158,16 @@ func AccountTypeIn(vs ...AccountType) predicate.Account {
 // AccountTypeNotIn applies the NotIn predicate on the "account_type" field.
 func AccountTypeNotIn(vs ...AccountType) predicate.Account {
 	return predicate.Account(sql.FieldNotIn(FieldAccountType, vs...))
+}
+
+// IsActiveEQ applies the EQ predicate on the "is_active" field.
+func IsActiveEQ(v bool) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldIsActive, v))
+}
+
+// IsActiveNEQ applies the NEQ predicate on the "is_active" field.
+func IsActiveNEQ(v bool) predicate.Account {
+	return predicate.Account(sql.FieldNEQ(FieldIsActive, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.

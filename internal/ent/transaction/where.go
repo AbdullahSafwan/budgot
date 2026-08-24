@@ -75,26 +75,6 @@ func CreatedAt(v time.Time) predicate.Transaction {
 	return predicate.Transaction(sql.FieldEQ(FieldCreatedAt, v))
 }
 
-// TransactionTypeEQ applies the EQ predicate on the "transaction_type" field.
-func TransactionTypeEQ(v TransactionType) predicate.Transaction {
-	return predicate.Transaction(sql.FieldEQ(FieldTransactionType, v))
-}
-
-// TransactionTypeNEQ applies the NEQ predicate on the "transaction_type" field.
-func TransactionTypeNEQ(v TransactionType) predicate.Transaction {
-	return predicate.Transaction(sql.FieldNEQ(FieldTransactionType, v))
-}
-
-// TransactionTypeIn applies the In predicate on the "transaction_type" field.
-func TransactionTypeIn(vs ...TransactionType) predicate.Transaction {
-	return predicate.Transaction(sql.FieldIn(FieldTransactionType, vs...))
-}
-
-// TransactionTypeNotIn applies the NotIn predicate on the "transaction_type" field.
-func TransactionTypeNotIn(vs ...TransactionType) predicate.Transaction {
-	return predicate.Transaction(sql.FieldNotIn(FieldTransactionType, vs...))
-}
-
 // AmountEQ applies the EQ predicate on the "amount" field.
 func AmountEQ(v int64) predicate.Transaction {
 	return predicate.Transaction(sql.FieldEQ(FieldAmount, v))

@@ -14,7 +14,6 @@ type Transaction struct {
 
 func (Transaction) Fields() []ent.Field {
 	return []ent.Field{
-		field.Enum("transaction_type").Values("income", "expense", "transfer"),
 		field.Int64("amount"),
 		field.String("description").Optional(),
 		field.Time("transaction_date"),

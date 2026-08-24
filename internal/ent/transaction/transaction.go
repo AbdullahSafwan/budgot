@@ -3,7 +3,6 @@
 package transaction
 
 import (
-	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -15,8 +14,6 @@ const (
 	Label = "transaction"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldTransactionType holds the string denoting the transaction_type field in the database.
-	FieldTransactionType = "transaction_type"
 	// FieldAmount holds the string denoting the amount field in the database.
 	FieldAmount = "amount"
 	// FieldDescription holds the string denoting the description field in the database.
@@ -56,7 +53,6 @@ const (
 // Columns holds all SQL columns for transaction fields.
 var Columns = []string{
 	FieldID,
-	FieldTransactionType,
 	FieldAmount,
 	FieldDescription,
 	FieldTransactionDate,
@@ -91,41 +87,12 @@ var (
 	DefaultCreatedAt func() time.Time
 )
 
-// TransactionType defines the type for the "transaction_type" enum field.
-type TransactionType string
-
-// TransactionType values.
-const (
-	TransactionTypeIncome   TransactionType = "income"
-	TransactionTypeExpense  TransactionType = "expense"
-	TransactionTypeTransfer TransactionType = "transfer"
-)
-
-func (tt TransactionType) String() string {
-	return string(tt)
-}
-
-// TransactionTypeValidator is a validator for the "transaction_type" field enum values. It is called by the builders before save.
-func TransactionTypeValidator(tt TransactionType) error {
-	switch tt {
-	case TransactionTypeIncome, TransactionTypeExpense, TransactionTypeTransfer:
-		return nil
-	default:
-		return fmt.Errorf("transaction: invalid enum value for transaction_type field: %q", tt)
-	}
-}
-
 // OrderOption defines the ordering options for the Transaction queries.
 type OrderOption func(*sql.Selector)
 
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
-}
-
-// ByTransactionType orders the results by the transaction_type field.
-func ByTransactionType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldTransactionType, opts...).ToFunc()
 }
 
 // ByAmount orders the results by the amount field.

@@ -22,12 +22,6 @@ type TransactionCreate struct {
 	hooks    []Hook
 }
 
-// SetTransactionType sets the "transaction_type" field.
-func (_c *TransactionCreate) SetTransactionType(v transaction.TransactionType) *TransactionCreate {
-	_c.mutation.SetTransactionType(v)
-	return _c
-}
-
 // SetAmount sets the "amount" field.
 func (_c *TransactionCreate) SetAmount(v int64) *TransactionCreate {
 	_c.mutation.SetAmount(v)
@@ -152,14 +146,6 @@ func (_c *TransactionCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *TransactionCreate) check() error {
-	if _, ok := _c.mutation.TransactionType(); !ok {
-		return &ValidationError{Name: "transaction_type", err: errors.New(`ent: missing required field "Transaction.transaction_type"`)}
-	}
-	if v, ok := _c.mutation.TransactionType(); ok {
-		if err := transaction.TransactionTypeValidator(v); err != nil {
-			return &ValidationError{Name: "transaction_type", err: fmt.Errorf(`ent: validator failed for field "Transaction.transaction_type": %w`, err)}
-		}
-	}
 	if _, ok := _c.mutation.Amount(); !ok {
 		return &ValidationError{Name: "amount", err: errors.New(`ent: missing required field "Transaction.amount"`)}
 	}
@@ -201,10 +187,6 @@ func (_c *TransactionCreate) createSpec() (*Transaction, *sqlgraph.CreateSpec) {
 		_node = &Transaction{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(transaction.Table, sqlgraph.NewFieldSpec(transaction.FieldID, field.TypeInt))
 	)
-	if value, ok := _c.mutation.TransactionType(); ok {
-		_spec.SetField(transaction.FieldTransactionType, field.TypeEnum, value)
-		_node.TransactionType = value
-	}
 	if value, ok := _c.mutation.Amount(); ok {
 		_spec.SetField(transaction.FieldAmount, field.TypeInt64, value)
 		_node.Amount = value

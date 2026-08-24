@@ -30,20 +30,6 @@ func (_u *TransactionUpdate) Where(ps ...predicate.Transaction) *TransactionUpda
 	return _u
 }
 
-// SetTransactionType sets the "transaction_type" field.
-func (_u *TransactionUpdate) SetTransactionType(v transaction.TransactionType) *TransactionUpdate {
-	_u.mutation.SetTransactionType(v)
-	return _u
-}
-
-// SetNillableTransactionType sets the "transaction_type" field if the given value is not nil.
-func (_u *TransactionUpdate) SetNillableTransactionType(v *transaction.TransactionType) *TransactionUpdate {
-	if v != nil {
-		_u.SetTransactionType(*v)
-	}
-	return _u
-}
-
 // SetAmount sets the "amount" field.
 func (_u *TransactionUpdate) SetAmount(v int64) *TransactionUpdate {
 	_u.mutation.ResetAmount()
@@ -192,11 +178,6 @@ func (_u *TransactionUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *TransactionUpdate) check() error {
-	if v, ok := _u.mutation.TransactionType(); ok {
-		if err := transaction.TransactionTypeValidator(v); err != nil {
-			return &ValidationError{Name: "transaction_type", err: fmt.Errorf(`ent: validator failed for field "Transaction.transaction_type": %w`, err)}
-		}
-	}
 	if _u.mutation.AccountCleared() && len(_u.mutation.AccountIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Transaction.account"`)
 	}
@@ -217,9 +198,6 @@ func (_u *TransactionUpdate) sqlSave(ctx context.Context) (_node int, err error)
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := _u.mutation.TransactionType(); ok {
-		_spec.SetField(transaction.FieldTransactionType, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.Amount(); ok {
 		_spec.SetField(transaction.FieldAmount, field.TypeInt64, value)
@@ -341,20 +319,6 @@ type TransactionUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *TransactionMutation
-}
-
-// SetTransactionType sets the "transaction_type" field.
-func (_u *TransactionUpdateOne) SetTransactionType(v transaction.TransactionType) *TransactionUpdateOne {
-	_u.mutation.SetTransactionType(v)
-	return _u
-}
-
-// SetNillableTransactionType sets the "transaction_type" field if the given value is not nil.
-func (_u *TransactionUpdateOne) SetNillableTransactionType(v *transaction.TransactionType) *TransactionUpdateOne {
-	if v != nil {
-		_u.SetTransactionType(*v)
-	}
-	return _u
 }
 
 // SetAmount sets the "amount" field.
@@ -518,11 +482,6 @@ func (_u *TransactionUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *TransactionUpdateOne) check() error {
-	if v, ok := _u.mutation.TransactionType(); ok {
-		if err := transaction.TransactionTypeValidator(v); err != nil {
-			return &ValidationError{Name: "transaction_type", err: fmt.Errorf(`ent: validator failed for field "Transaction.transaction_type": %w`, err)}
-		}
-	}
 	if _u.mutation.AccountCleared() && len(_u.mutation.AccountIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Transaction.account"`)
 	}
@@ -560,9 +519,6 @@ func (_u *TransactionUpdateOne) sqlSave(ctx context.Context) (_node *Transaction
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := _u.mutation.TransactionType(); ok {
-		_spec.SetField(transaction.FieldTransactionType, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.Amount(); ok {
 		_spec.SetField(transaction.FieldAmount, field.TypeInt64, value)

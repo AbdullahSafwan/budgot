@@ -12,6 +12,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -94,6 +95,12 @@ func (_u *BudgetUpdate) AddAmount(v int64) *BudgetUpdate {
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *BudgetUpdate) SetUpdatedAt(v time.Time) *BudgetUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by ID.
 func (_u *BudgetUpdate) SetOwnerID(id int) *BudgetUpdate {
 	_u.mutation.SetOwnerID(id)
@@ -169,6 +176,7 @@ func (_u *BudgetUpdate) ClearCurrency() *BudgetUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *BudgetUpdate) Save(ctx context.Context) (int, error) {
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -191,6 +199,14 @@ func (_u *BudgetUpdate) Exec(ctx context.Context) error {
 func (_u *BudgetUpdate) ExecX(ctx context.Context) {
 	if err := _u.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (_u *BudgetUpdate) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		v := budget.UpdateDefaultUpdatedAt()
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -250,6 +266,9 @@ func (_u *BudgetUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.AddedAmount(); ok {
 		_spec.AddField(budget.FieldAmount, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(budget.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -450,6 +469,12 @@ func (_u *BudgetUpdateOne) AddAmount(v int64) *BudgetUpdateOne {
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *BudgetUpdateOne) SetUpdatedAt(v time.Time) *BudgetUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by ID.
 func (_u *BudgetUpdateOne) SetOwnerID(id int) *BudgetUpdateOne {
 	_u.mutation.SetOwnerID(id)
@@ -538,6 +563,7 @@ func (_u *BudgetUpdateOne) Select(field string, fields ...string) *BudgetUpdateO
 
 // Save executes the query and returns the updated Budget entity.
 func (_u *BudgetUpdateOne) Save(ctx context.Context) (*Budget, error) {
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -560,6 +586,14 @@ func (_u *BudgetUpdateOne) Exec(ctx context.Context) error {
 func (_u *BudgetUpdateOne) ExecX(ctx context.Context) {
 	if err := _u.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (_u *BudgetUpdateOne) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		v := budget.UpdateDefaultUpdatedAt()
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -636,6 +670,9 @@ func (_u *BudgetUpdateOne) sqlSave(ctx context.Context) (_node *Budget, err erro
 	}
 	if value, ok := _u.mutation.AddedAmount(); ok {
 		_spec.AddField(budget.FieldAmount, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(budget.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{

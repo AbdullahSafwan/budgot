@@ -51,6 +51,7 @@ type AccountMutation struct {
 	id                  *int
 	name                *string
 	account_type        *account.AccountType
+	is_active           *bool
 	created_at          *time.Time
 	updated_at          *time.Time
 	clearedFields       map[string]struct{}
@@ -236,6 +237,42 @@ func (m *AccountMutation) OldAccountType(ctx context.Context) (v account.Account
 // ResetAccountType resets all changes to the "account_type" field.
 func (m *AccountMutation) ResetAccountType() {
 	m.account_type = nil
+}
+
+// SetIsActive sets the "is_active" field.
+func (m *AccountMutation) SetIsActive(b bool) {
+	m.is_active = &b
+}
+
+// IsActive returns the value of the "is_active" field in the mutation.
+func (m *AccountMutation) IsActive() (r bool, exists bool) {
+	v := m.is_active
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsActive returns the old "is_active" field's value of the Account entity.
+// If the Account object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountMutation) OldIsActive(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsActive is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsActive requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsActive: %w", err)
+	}
+	return oldValue.IsActive, nil
+}
+
+// ResetIsActive resets all changes to the "is_active" field.
+func (m *AccountMutation) ResetIsActive() {
+	m.is_active = nil
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -515,12 +552,15 @@ func (m *AccountMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AccountMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 5)
 	if m.name != nil {
 		fields = append(fields, account.FieldName)
 	}
 	if m.account_type != nil {
 		fields = append(fields, account.FieldAccountType)
+	}
+	if m.is_active != nil {
+		fields = append(fields, account.FieldIsActive)
 	}
 	if m.created_at != nil {
 		fields = append(fields, account.FieldCreatedAt)
@@ -540,6 +580,8 @@ func (m *AccountMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case account.FieldAccountType:
 		return m.AccountType()
+	case account.FieldIsActive:
+		return m.IsActive()
 	case account.FieldCreatedAt:
 		return m.CreatedAt()
 	case account.FieldUpdatedAt:
@@ -557,6 +599,8 @@ func (m *AccountMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldName(ctx)
 	case account.FieldAccountType:
 		return m.OldAccountType(ctx)
+	case account.FieldIsActive:
+		return m.OldIsActive(ctx)
 	case account.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case account.FieldUpdatedAt:
@@ -583,6 +627,13 @@ func (m *AccountMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAccountType(v)
+		return nil
+	case account.FieldIsActive:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsActive(v)
 		return nil
 	case account.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -652,6 +703,9 @@ func (m *AccountMutation) ResetField(name string) error {
 		return nil
 	case account.FieldAccountType:
 		m.ResetAccountType()
+		return nil
+	case account.FieldIsActive:
+		m.ResetIsActive()
 		return nil
 	case account.FieldCreatedAt:
 		m.ResetCreatedAt()
@@ -813,6 +867,8 @@ type BudgetMutation struct {
 	addyear         *int
 	amount          *int64
 	addamount       *int64
+	created_at      *time.Time
+	updated_at      *time.Time
 	clearedFields   map[string]struct{}
 	owner           *int
 	clearedowner    bool
@@ -1093,6 +1149,78 @@ func (m *BudgetMutation) ResetAmount() {
 	m.addamount = nil
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (m *BudgetMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *BudgetMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Budget entity.
+// If the Budget object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BudgetMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *BudgetMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *BudgetMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *BudgetMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Budget entity.
+// If the Budget object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BudgetMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *BudgetMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by id.
 func (m *BudgetMutation) SetOwnerID(id int) {
 	m.owner = &id
@@ -1283,7 +1411,7 @@ func (m *BudgetMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BudgetMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 5)
 	if m.month != nil {
 		fields = append(fields, budget.FieldMonth)
 	}
@@ -1292,6 +1420,12 @@ func (m *BudgetMutation) Fields() []string {
 	}
 	if m.amount != nil {
 		fields = append(fields, budget.FieldAmount)
+	}
+	if m.created_at != nil {
+		fields = append(fields, budget.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, budget.FieldUpdatedAt)
 	}
 	return fields
 }
@@ -1307,6 +1441,10 @@ func (m *BudgetMutation) Field(name string) (ent.Value, bool) {
 		return m.Year()
 	case budget.FieldAmount:
 		return m.Amount()
+	case budget.FieldCreatedAt:
+		return m.CreatedAt()
+	case budget.FieldUpdatedAt:
+		return m.UpdatedAt()
 	}
 	return nil, false
 }
@@ -1322,6 +1460,10 @@ func (m *BudgetMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldYear(ctx)
 	case budget.FieldAmount:
 		return m.OldAmount(ctx)
+	case budget.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case budget.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
 	}
 	return nil, fmt.Errorf("unknown Budget field %s", name)
 }
@@ -1351,6 +1493,20 @@ func (m *BudgetMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAmount(v)
+		return nil
+	case budget.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case budget.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Budget field %s", name)
@@ -1448,6 +1604,12 @@ func (m *BudgetMutation) ResetField(name string) error {
 		return nil
 	case budget.FieldAmount:
 		m.ResetAmount()
+		return nil
+	case budget.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case budget.FieldUpdatedAt:
+		m.ResetUpdatedAt()
 		return nil
 	}
 	return fmt.Errorf("unknown Budget field %s", name)
@@ -1590,6 +1752,7 @@ type CategoryMutation struct {
 	name                *string
 	_type               *category.Type
 	color               *string
+	is_active           *bool
 	clearedFields       map[string]struct{}
 	owner               *int
 	clearedowner        bool
@@ -1810,6 +1973,42 @@ func (m *CategoryMutation) ResetColor() {
 	m.color = nil
 }
 
+// SetIsActive sets the "is_active" field.
+func (m *CategoryMutation) SetIsActive(b bool) {
+	m.is_active = &b
+}
+
+// IsActive returns the value of the "is_active" field in the mutation.
+func (m *CategoryMutation) IsActive() (r bool, exists bool) {
+	v := m.is_active
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsActive returns the old "is_active" field's value of the Category entity.
+// If the Category object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CategoryMutation) OldIsActive(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsActive is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsActive requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsActive: %w", err)
+	}
+	return oldValue.IsActive, nil
+}
+
+// ResetIsActive resets all changes to the "is_active" field.
+func (m *CategoryMutation) ResetIsActive() {
+	m.is_active = nil
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by id.
 func (m *CategoryMutation) SetOwnerID(id int) {
 	m.owner = &id
@@ -1991,7 +2190,7 @@ func (m *CategoryMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *CategoryMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 4)
 	if m.name != nil {
 		fields = append(fields, category.FieldName)
 	}
@@ -2000,6 +2199,9 @@ func (m *CategoryMutation) Fields() []string {
 	}
 	if m.color != nil {
 		fields = append(fields, category.FieldColor)
+	}
+	if m.is_active != nil {
+		fields = append(fields, category.FieldIsActive)
 	}
 	return fields
 }
@@ -2015,6 +2217,8 @@ func (m *CategoryMutation) Field(name string) (ent.Value, bool) {
 		return m.GetType()
 	case category.FieldColor:
 		return m.Color()
+	case category.FieldIsActive:
+		return m.IsActive()
 	}
 	return nil, false
 }
@@ -2030,6 +2234,8 @@ func (m *CategoryMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldType(ctx)
 	case category.FieldColor:
 		return m.OldColor(ctx)
+	case category.FieldIsActive:
+		return m.OldIsActive(ctx)
 	}
 	return nil, fmt.Errorf("unknown Category field %s", name)
 }
@@ -2059,6 +2265,13 @@ func (m *CategoryMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetColor(v)
+		return nil
+	case category.FieldIsActive:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsActive(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Category field %s", name)
@@ -2117,6 +2330,9 @@ func (m *CategoryMutation) ResetField(name string) error {
 		return nil
 	case category.FieldColor:
 		m.ResetColor()
+		return nil
+	case category.FieldIsActive:
+		m.ResetIsActive()
 		return nil
 	}
 	return fmt.Errorf("unknown Category field %s", name)
@@ -4659,7 +4875,6 @@ type TransactionMutation struct {
 	op                        Op
 	typ                       string
 	id                        *int
-	transaction_type          *transaction.TransactionType
 	amount                    *int64
 	addamount                 *int64
 	description               *string
@@ -4773,42 +4988,6 @@ func (m *TransactionMutation) IDs(ctx context.Context) ([]int, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
-}
-
-// SetTransactionType sets the "transaction_type" field.
-func (m *TransactionMutation) SetTransactionType(tt transaction.TransactionType) {
-	m.transaction_type = &tt
-}
-
-// TransactionType returns the value of the "transaction_type" field in the mutation.
-func (m *TransactionMutation) TransactionType() (r transaction.TransactionType, exists bool) {
-	v := m.transaction_type
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldTransactionType returns the old "transaction_type" field's value of the Transaction entity.
-// If the Transaction object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TransactionMutation) OldTransactionType(ctx context.Context) (v transaction.TransactionType, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldTransactionType is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldTransactionType requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldTransactionType: %w", err)
-	}
-	return oldValue.TransactionType, nil
-}
-
-// ResetTransactionType resets all changes to the "transaction_type" field.
-func (m *TransactionMutation) ResetTransactionType() {
-	m.transaction_type = nil
 }
 
 // SetAmount sets the "amount" field.
@@ -5139,10 +5318,7 @@ func (m *TransactionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TransactionMutation) Fields() []string {
-	fields := make([]string, 0, 5)
-	if m.transaction_type != nil {
-		fields = append(fields, transaction.FieldTransactionType)
-	}
+	fields := make([]string, 0, 4)
 	if m.amount != nil {
 		fields = append(fields, transaction.FieldAmount)
 	}
@@ -5163,8 +5339,6 @@ func (m *TransactionMutation) Fields() []string {
 // schema.
 func (m *TransactionMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case transaction.FieldTransactionType:
-		return m.TransactionType()
 	case transaction.FieldAmount:
 		return m.Amount()
 	case transaction.FieldDescription:
@@ -5182,8 +5356,6 @@ func (m *TransactionMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *TransactionMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case transaction.FieldTransactionType:
-		return m.OldTransactionType(ctx)
 	case transaction.FieldAmount:
 		return m.OldAmount(ctx)
 	case transaction.FieldDescription:
@@ -5201,13 +5373,6 @@ func (m *TransactionMutation) OldField(ctx context.Context, name string) (ent.Va
 // type.
 func (m *TransactionMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case transaction.FieldTransactionType:
-		v, ok := value.(transaction.TransactionType)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetTransactionType(v)
-		return nil
 	case transaction.FieldAmount:
 		v, ok := value.(int64)
 		if !ok {
@@ -5309,9 +5474,6 @@ func (m *TransactionMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *TransactionMutation) ResetField(name string) error {
 	switch name {
-	case transaction.FieldTransactionType:
-		m.ResetTransactionType()
-		return nil
 	case transaction.FieldAmount:
 		m.ResetAmount()
 		return nil

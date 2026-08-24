@@ -13,6 +13,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "account_type", Type: field.TypeEnum, Enums: []string{"checking", "savings", "credit", "cash", "investment"}, Default: "checking"},
+		{Name: "is_active", Type: field.TypeBool, Default: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "country_id", Type: field.TypeInt},
@@ -27,19 +28,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "accounts_countries_accounts",
-				Columns:    []*schema.Column{AccountsColumns[5]},
+				Columns:    []*schema.Column{AccountsColumns[6]},
 				RefColumns: []*schema.Column{CountriesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "accounts_currencies_accounts",
-				Columns:    []*schema.Column{AccountsColumns[6]},
+				Columns:    []*schema.Column{AccountsColumns[7]},
 				RefColumns: []*schema.Column{CurrenciesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "accounts_users_accounts",
-				Columns:    []*schema.Column{AccountsColumns[7]},
+				Columns:    []*schema.Column{AccountsColumns[8]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -51,6 +52,8 @@ var (
 		{Name: "month", Type: field.TypeInt},
 		{Name: "year", Type: field.TypeInt},
 		{Name: "amount", Type: field.TypeInt64},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "category_id", Type: field.TypeInt},
 		{Name: "country_id", Type: field.TypeInt},
 		{Name: "currency_id", Type: field.TypeInt},
@@ -64,25 +67,25 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "budgets_categories_budgets",
-				Columns:    []*schema.Column{BudgetsColumns[4]},
+				Columns:    []*schema.Column{BudgetsColumns[6]},
 				RefColumns: []*schema.Column{CategoriesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "budgets_countries_budgets",
-				Columns:    []*schema.Column{BudgetsColumns[5]},
+				Columns:    []*schema.Column{BudgetsColumns[7]},
 				RefColumns: []*schema.Column{CountriesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "budgets_currencies_budgets",
-				Columns:    []*schema.Column{BudgetsColumns[6]},
+				Columns:    []*schema.Column{BudgetsColumns[8]},
 				RefColumns: []*schema.Column{CurrenciesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "budgets_users_budgets",
-				Columns:    []*schema.Column{BudgetsColumns[7]},
+				Columns:    []*schema.Column{BudgetsColumns[9]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -91,7 +94,7 @@ var (
 			{
 				Name:    "budget_month_year_user_id_category_id_country_id_currency_id",
 				Unique:  true,
-				Columns: []*schema.Column{BudgetsColumns[1], BudgetsColumns[2], BudgetsColumns[7], BudgetsColumns[4], BudgetsColumns[5], BudgetsColumns[6]},
+				Columns: []*schema.Column{BudgetsColumns[1], BudgetsColumns[2], BudgetsColumns[9], BudgetsColumns[6], BudgetsColumns[7], BudgetsColumns[8]},
 			},
 		},
 	}
@@ -101,6 +104,7 @@ var (
 		{Name: "name", Type: field.TypeString},
 		{Name: "type", Type: field.TypeEnum, Enums: []string{"income", "expense", "transfer"}},
 		{Name: "color", Type: field.TypeString},
+		{Name: "is_active", Type: field.TypeBool, Default: true},
 		{Name: "user_id", Type: field.TypeInt},
 	}
 	// CategoriesTable holds the schema information for the "categories" table.
@@ -111,9 +115,16 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "categories_users_categories",
-				Columns:    []*schema.Column{CategoriesColumns[4]},
+				Columns:    []*schema.Column{CategoriesColumns[5]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "category_name_user_id",
+				Unique:  true,
+				Columns: []*schema.Column{CategoriesColumns[1], CategoriesColumns[5]},
 			},
 		},
 	}
@@ -184,7 +195,6 @@ var (
 	// TransactionsColumns holds the columns for the "transactions" table.
 	TransactionsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "transaction_type", Type: field.TypeEnum, Enums: []string{"income", "expense", "transfer"}},
 		{Name: "amount", Type: field.TypeInt64},
 		{Name: "description", Type: field.TypeString, Nullable: true},
 		{Name: "transaction_date", Type: field.TypeTime},
@@ -201,19 +211,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "transactions_accounts_transactions",
-				Columns:    []*schema.Column{TransactionsColumns[6]},
+				Columns:    []*schema.Column{TransactionsColumns[5]},
 				RefColumns: []*schema.Column{AccountsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "transactions_categories_transactions",
-				Columns:    []*schema.Column{TransactionsColumns[7]},
+				Columns:    []*schema.Column{TransactionsColumns[6]},
 				RefColumns: []*schema.Column{CategoriesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "transactions_transactions_linked_transaction",
-				Columns:    []*schema.Column{TransactionsColumns[8]},
+				Columns:    []*schema.Column{TransactionsColumns[7]},
 				RefColumns: []*schema.Column{TransactionsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

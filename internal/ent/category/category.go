@@ -20,6 +20,8 @@ const (
 	FieldType = "type"
 	// FieldColor holds the string denoting the color field in the database.
 	FieldColor = "color"
+	// FieldIsActive holds the string denoting the is_active field in the database.
+	FieldIsActive = "is_active"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
 	EdgeOwner = "owner"
 	// EdgeTransactions holds the string denoting the transactions edge name in mutations.
@@ -57,6 +59,7 @@ var Columns = []string{
 	FieldName,
 	FieldType,
 	FieldColor,
+	FieldIsActive,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "categories"
@@ -85,6 +88,8 @@ var (
 	NameValidator func(string) error
 	// ColorValidator is a validator for the "color" field. It is called by the builders before save.
 	ColorValidator func(string) error
+	// DefaultIsActive holds the default value on creation for the "is_active" field.
+	DefaultIsActive bool
 )
 
 // Type defines the type for the "type" enum field.
@@ -132,6 +137,11 @@ func ByType(opts ...sql.OrderTermOption) OrderOption {
 // ByColor orders the results by the color field.
 func ByColor(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldColor, opts...).ToFunc()
+}
+
+// ByIsActive orders the results by the is_active field.
+func ByIsActive(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsActive, opts...).ToFunc()
 }
 
 // ByOwnerField orders the results by owner field.
