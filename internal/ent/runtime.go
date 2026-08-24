@@ -56,6 +56,10 @@ func init() {
 			return nil
 		}
 	}()
+	// budgetDescAmount is the schema descriptor for amount field.
+	budgetDescAmount := budgetFields[2].Descriptor()
+	// budget.AmountValidator is a validator for the "amount" field. It is called by the builders before save.
+	budget.AmountValidator = budgetDescAmount.Validators[0].(func(int64) error)
 	categoryFields := schema.Category{}.Fields()
 	_ = categoryFields
 	// categoryDescName is the schema descriptor for name field.

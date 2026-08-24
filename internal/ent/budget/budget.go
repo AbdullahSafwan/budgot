@@ -93,6 +93,8 @@ func ValidColumn(column string) bool {
 var (
 	// MonthValidator is a validator for the "month" field. It is called by the builders before save.
 	MonthValidator func(int) error
+	// AmountValidator is a validator for the "amount" field. It is called by the builders before save.
+	AmountValidator func(int64) error
 )
 
 // OrderOption defines the ordering options for the Budget queries.

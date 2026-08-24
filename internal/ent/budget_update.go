@@ -201,6 +201,11 @@ func (_u *BudgetUpdate) check() error {
 			return &ValidationError{Name: "month", err: fmt.Errorf(`ent: validator failed for field "Budget.month": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.Amount(); ok {
+		if err := budget.AmountValidator(v); err != nil {
+			return &ValidationError{Name: "amount", err: fmt.Errorf(`ent: validator failed for field "Budget.amount": %w`, err)}
+		}
+	}
 	if _u.mutation.OwnerCleared() && len(_u.mutation.OwnerIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Budget.owner"`)
 	}
@@ -563,6 +568,11 @@ func (_u *BudgetUpdateOne) check() error {
 	if v, ok := _u.mutation.Month(); ok {
 		if err := budget.MonthValidator(v); err != nil {
 			return &ValidationError{Name: "month", err: fmt.Errorf(`ent: validator failed for field "Budget.month": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Amount(); ok {
+		if err := budget.AmountValidator(v); err != nil {
+			return &ValidationError{Name: "amount", err: fmt.Errorf(`ent: validator failed for field "Budget.amount": %w`, err)}
 		}
 	}
 	if _u.mutation.OwnerCleared() && len(_u.mutation.OwnerIDs()) > 0 {

@@ -87,6 +87,13 @@ var (
 				OnDelete:   schema.Cascade,
 			},
 		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "budget_month_year_user_id_category_id_country_id_currency_id",
+				Unique:  true,
+				Columns: []*schema.Column{BudgetsColumns[1], BudgetsColumns[2], BudgetsColumns[7], BudgetsColumns[4], BudgetsColumns[5], BudgetsColumns[6]},
+			},
+		},
 	}
 	// CategoriesColumns holds the columns for the "categories" table.
 	CategoriesColumns = []*schema.Column{

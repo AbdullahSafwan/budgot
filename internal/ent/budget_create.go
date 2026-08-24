@@ -133,6 +133,11 @@ func (_c *BudgetCreate) check() error {
 	if _, ok := _c.mutation.Amount(); !ok {
 		return &ValidationError{Name: "amount", err: errors.New(`ent: missing required field "Budget.amount"`)}
 	}
+	if v, ok := _c.mutation.Amount(); ok {
+		if err := budget.AmountValidator(v); err != nil {
+			return &ValidationError{Name: "amount", err: fmt.Errorf(`ent: validator failed for field "Budget.amount": %w`, err)}
+		}
+	}
 	if len(_c.mutation.OwnerIDs()) == 0 {
 		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "Budget.owner"`)}
 	}

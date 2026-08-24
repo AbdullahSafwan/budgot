@@ -26,6 +26,7 @@ func (Transaction) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("account", Account.Type).Ref("transactions").Unique().Required(),
 		edge.From("category", Category.Type).Ref("transactions").Unique().Required(),
+		// Transfer links are symmetric; create/delete both sides atomically via one service method.
 		edge.To("linked_transaction", Transaction.Type).Unique(),
 	}
 }
