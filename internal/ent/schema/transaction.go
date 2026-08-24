@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 )
 
 type Transaction struct {
@@ -27,5 +28,12 @@ func (Transaction) Edges() []ent.Edge {
 		edge.From("category", Category.Type).Ref("transactions").Unique().Required(),
 		// Transfer links are symmetric; create/delete both sides atomically via one service method.
 		edge.To("linked_transaction", Transaction.Type).Unique(),
+	}
+}
+
+func (Transaction) Indexes() []ent.Index {
+	return []ent.Index{
+		index.Edges("account"),
+		index.Edges("category"),
 	}
 }

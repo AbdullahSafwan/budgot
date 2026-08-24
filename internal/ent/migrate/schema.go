@@ -228,6 +228,18 @@ var (
 				OnDelete:   schema.SetNull,
 			},
 		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "transaction_account_id",
+				Unique:  false,
+				Columns: []*schema.Column{TransactionsColumns[5]},
+			},
+			{
+				Name:    "transaction_category_id",
+				Unique:  false,
+				Columns: []*schema.Column{TransactionsColumns[6]},
+			},
+		},
 	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
