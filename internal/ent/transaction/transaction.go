@@ -22,6 +22,8 @@ const (
 	FieldTransactionDate = "transaction_date"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
+	// EdgeOwner holds the string denoting the owner edge name in mutations.
+	EdgeOwner = "owner"
 	// EdgeAccount holds the string denoting the account edge name in mutations.
 	EdgeAccount = "account"
 	// EdgeCategory holds the string denoting the category edge name in mutations.
@@ -30,6 +32,13 @@ const (
 	EdgeLinkedTransaction = "linked_transaction"
 	// Table holds the table name of the transaction in the database.
 	Table = "transactions"
+	// OwnerTable is the table that holds the owner relation/edge.
+	OwnerTable = "transactions"
+	// OwnerInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	OwnerInverseTable = "users"
+	// OwnerColumn is the table column denoting the owner relation/edge.
+	OwnerColumn = "user_id"
 	// AccountTable is the table that holds the account relation/edge.
 	AccountTable = "transactions"
 	// AccountInverseTable is the table name for the Account entity.
@@ -65,6 +74,7 @@ var ForeignKeys = []string{
 	"account_id",
 	"category_id",
 	"transaction_linked_transaction",
+	"user_id",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -115,6 +125,13 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
 }
 
+// ByOwnerField orders the results by owner field.
+func ByOwnerField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newOwnerStep(), sql.OrderByField(field, opts...))
+	}
+}
+
 // ByAccountField orders the results by account field.
 func ByAccountField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -134,6 +151,13 @@ func ByLinkedTransactionField(field string, opts ...sql.OrderTermOption) OrderOp
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newLinkedTransactionStep(), sql.OrderByField(field, opts...))
 	}
+}
+func newOwnerStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(OwnerInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, OwnerTable, OwnerColumn),
+	)
 }
 func newAccountStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(

@@ -7,6 +7,7 @@ import (
 	"budgot/internal/ent/category"
 	"budgot/internal/ent/predicate"
 	"budgot/internal/ent/transaction"
+	"budgot/internal/ent/user"
 	"context"
 	"fmt"
 	"math"
@@ -24,6 +25,7 @@ type TransactionQuery struct {
 	order                 []transaction.OrderOption
 	inters                []Interceptor
 	predicates            []predicate.Transaction
+	withOwner             *UserQuery
 	withAccount           *AccountQuery
 	withCategory          *CategoryQuery
 	withLinkedTransaction *TransactionQuery
@@ -62,6 +64,28 @@ func (_q *TransactionQuery) Unique(unique bool) *TransactionQuery {
 func (_q *TransactionQuery) Order(o ...transaction.OrderOption) *TransactionQuery {
 	_q.order = append(_q.order, o...)
 	return _q
+}
+
+// QueryOwner chains the current query on the "owner" edge.
+func (_q *TransactionQuery) QueryOwner() *UserQuery {
+	query := (&UserClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(transaction.Table, transaction.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, transaction.OwnerTable, transaction.OwnerColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // QueryAccount chains the current query on the "account" edge.
@@ -322,6 +346,7 @@ func (_q *TransactionQuery) Clone() *TransactionQuery {
 		order:                 append([]transaction.OrderOption{}, _q.order...),
 		inters:                append([]Interceptor{}, _q.inters...),
 		predicates:            append([]predicate.Transaction{}, _q.predicates...),
+		withOwner:             _q.withOwner.Clone(),
 		withAccount:           _q.withAccount.Clone(),
 		withCategory:          _q.withCategory.Clone(),
 		withLinkedTransaction: _q.withLinkedTransaction.Clone(),
@@ -329,6 +354,17 @@ func (_q *TransactionQuery) Clone() *TransactionQuery {
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
+}
+
+// WithOwner tells the query-builder to eager-load the nodes that are connected to
+// the "owner" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *TransactionQuery) WithOwner(opts ...func(*UserQuery)) *TransactionQuery {
+	query := (&UserClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withOwner = query
+	return _q
 }
 
 // WithAccount tells the query-builder to eager-load the nodes that are connected to
@@ -443,13 +479,14 @@ func (_q *TransactionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 		nodes       = []*Transaction{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
+			_q.withOwner != nil,
 			_q.withAccount != nil,
 			_q.withCategory != nil,
 			_q.withLinkedTransaction != nil,
 		}
 	)
-	if _q.withAccount != nil || _q.withCategory != nil || _q.withLinkedTransaction != nil {
+	if _q.withOwner != nil || _q.withAccount != nil || _q.withCategory != nil || _q.withLinkedTransaction != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -473,6 +510,12 @@ func (_q *TransactionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := _q.withOwner; query != nil {
+		if err := _q.loadOwner(ctx, query, nodes, nil,
+			func(n *Transaction, e *User) { n.Edges.Owner = e }); err != nil {
+			return nil, err
+		}
+	}
 	if query := _q.withAccount; query != nil {
 		if err := _q.loadAccount(ctx, query, nodes, nil,
 			func(n *Transaction, e *Account) { n.Edges.Account = e }); err != nil {
@@ -494,6 +537,38 @@ func (_q *TransactionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	return nodes, nil
 }
 
+func (_q *TransactionQuery) loadOwner(ctx context.Context, query *UserQuery, nodes []*Transaction, init func(*Transaction), assign func(*Transaction, *User)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Transaction)
+	for i := range nodes {
+		if nodes[i].user_id == nil {
+			continue
+		}
+		fk := *nodes[i].user_id
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(user.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "user_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 func (_q *TransactionQuery) loadAccount(ctx context.Context, query *AccountQuery, nodes []*Transaction, init func(*Transaction), assign func(*Transaction, *Account)) error {
 	ids := make([]int, 0, len(nodes))
 	nodeids := make(map[int][]*Transaction)

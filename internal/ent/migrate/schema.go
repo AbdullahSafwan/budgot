@@ -202,6 +202,7 @@ var (
 		{Name: "account_id", Type: field.TypeInt},
 		{Name: "category_id", Type: field.TypeInt},
 		{Name: "transaction_linked_transaction", Type: field.TypeInt, Unique: true, Nullable: true},
+		{Name: "user_id", Type: field.TypeInt},
 	}
 	// TransactionsTable holds the schema information for the "transactions" table.
 	TransactionsTable = &schema.Table{
@@ -227,8 +228,19 @@ var (
 				RefColumns: []*schema.Column{TransactionsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
+			{
+				Symbol:     "transactions_users_transactions",
+				Columns:    []*schema.Column{TransactionsColumns[8]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
 		},
 		Indexes: []*schema.Index{
+			{
+				Name:    "transaction_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{TransactionsColumns[8]},
+			},
 			{
 				Name:    "transaction_account_id",
 				Unique:  false,
@@ -284,4 +296,5 @@ func init() {
 	TransactionsTable.ForeignKeys[0].RefTable = AccountsTable
 	TransactionsTable.ForeignKeys[1].RefTable = CategoriesTable
 	TransactionsTable.ForeignKeys[2].RefTable = TransactionsTable
+	TransactionsTable.ForeignKeys[3].RefTable = UsersTable
 }

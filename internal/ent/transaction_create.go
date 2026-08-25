@@ -6,6 +6,7 @@ import (
 	"budgot/internal/ent/account"
 	"budgot/internal/ent/category"
 	"budgot/internal/ent/transaction"
+	"budgot/internal/ent/user"
 	"context"
 	"errors"
 	"fmt"
@@ -60,6 +61,17 @@ func (_c *TransactionCreate) SetNillableCreatedAt(v *time.Time) *TransactionCrea
 		_c.SetCreatedAt(*v)
 	}
 	return _c
+}
+
+// SetOwnerID sets the "owner" edge to the User entity by ID.
+func (_c *TransactionCreate) SetOwnerID(id int) *TransactionCreate {
+	_c.mutation.SetOwnerID(id)
+	return _c
+}
+
+// SetOwner sets the "owner" edge to the User entity.
+func (_c *TransactionCreate) SetOwner(v *User) *TransactionCreate {
+	return _c.SetOwnerID(v.ID)
 }
 
 // SetAccountID sets the "account" edge to the Account entity by ID.
@@ -155,6 +167,9 @@ func (_c *TransactionCreate) check() error {
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Transaction.created_at"`)}
 	}
+	if len(_c.mutation.OwnerIDs()) == 0 {
+		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "Transaction.owner"`)}
+	}
 	if len(_c.mutation.AccountIDs()) == 0 {
 		return &ValidationError{Name: "account", err: errors.New(`ent: missing required edge "Transaction.account"`)}
 	}
@@ -202,6 +217,23 @@ func (_c *TransactionCreate) createSpec() (*Transaction, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(transaction.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
+	}
+	if nodes := _c.mutation.OwnerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   transaction.OwnerTable,
+			Columns: []string{transaction.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.user_id = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.AccountIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

@@ -6,6 +6,7 @@ import (
 	"budgot/internal/ent/account"
 	"budgot/internal/ent/category"
 	"budgot/internal/ent/transaction"
+	"budgot/internal/ent/user"
 	"fmt"
 	"strings"
 	"time"
@@ -33,11 +34,14 @@ type Transaction struct {
 	account_id                     *int
 	category_id                    *int
 	transaction_linked_transaction *int
+	user_id                        *int
 	selectValues                   sql.SelectValues
 }
 
 // TransactionEdges holds the relations/edges for other nodes in the graph.
 type TransactionEdges struct {
+	// Owner holds the value of the owner edge.
+	Owner *User `json:"owner,omitempty"`
 	// Account holds the value of the account edge.
 	Account *Account `json:"account,omitempty"`
 	// Category holds the value of the category edge.
@@ -46,7 +50,18 @@ type TransactionEdges struct {
 	LinkedTransaction *Transaction `json:"linked_transaction,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
+}
+
+// OwnerOrErr returns the Owner value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e TransactionEdges) OwnerOrErr() (*User, error) {
+	if e.Owner != nil {
+		return e.Owner, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: user.Label}
+	}
+	return nil, &NotLoadedError{edge: "owner"}
 }
 
 // AccountOrErr returns the Account value or an error if the edge
@@ -54,7 +69,7 @@ type TransactionEdges struct {
 func (e TransactionEdges) AccountOrErr() (*Account, error) {
 	if e.Account != nil {
 		return e.Account, nil
-	} else if e.loadedTypes[0] {
+	} else if e.loadedTypes[1] {
 		return nil, &NotFoundError{label: account.Label}
 	}
 	return nil, &NotLoadedError{edge: "account"}
@@ -65,7 +80,7 @@ func (e TransactionEdges) AccountOrErr() (*Account, error) {
 func (e TransactionEdges) CategoryOrErr() (*Category, error) {
 	if e.Category != nil {
 		return e.Category, nil
-	} else if e.loadedTypes[1] {
+	} else if e.loadedTypes[2] {
 		return nil, &NotFoundError{label: category.Label}
 	}
 	return nil, &NotLoadedError{edge: "category"}
@@ -76,7 +91,7 @@ func (e TransactionEdges) CategoryOrErr() (*Category, error) {
 func (e TransactionEdges) LinkedTransactionOrErr() (*Transaction, error) {
 	if e.LinkedTransaction != nil {
 		return e.LinkedTransaction, nil
-	} else if e.loadedTypes[2] {
+	} else if e.loadedTypes[3] {
 		return nil, &NotFoundError{label: transaction.Label}
 	}
 	return nil, &NotLoadedError{edge: "linked_transaction"}
@@ -98,6 +113,8 @@ func (*Transaction) scanValues(columns []string) ([]any, error) {
 		case transaction.ForeignKeys[1]: // category_id
 			values[i] = new(sql.NullInt64)
 		case transaction.ForeignKeys[2]: // transaction_linked_transaction
+			values[i] = new(sql.NullInt64)
+		case transaction.ForeignKeys[3]: // user_id
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -165,6 +182,13 @@ func (_m *Transaction) assignValues(columns []string, values []any) error {
 				_m.transaction_linked_transaction = new(int)
 				*_m.transaction_linked_transaction = int(value.Int64)
 			}
+		case transaction.ForeignKeys[3]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field user_id", value)
+			} else if value.Valid {
+				_m.user_id = new(int)
+				*_m.user_id = int(value.Int64)
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -176,6 +200,11 @@ func (_m *Transaction) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (_m *Transaction) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
+}
+
+// QueryOwner queries the "owner" edge of the Transaction entity.
+func (_m *Transaction) QueryOwner() *UserQuery {
+	return NewTransactionClient(_m.config).QueryOwner(_m)
 }
 
 // QueryAccount queries the "account" edge of the Transaction entity.

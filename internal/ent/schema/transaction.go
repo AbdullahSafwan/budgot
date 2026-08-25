@@ -24,6 +24,7 @@ func (Transaction) Fields() []ent.Field {
 
 func (Transaction) Edges() []ent.Edge {
 	return []ent.Edge{
+		edge.From("owner", User.Type).Ref("transactions").Unique().Required(),
 		edge.From("account", Account.Type).Ref("transactions").Unique().Required(),
 		edge.From("category", Category.Type).Ref("transactions").Unique().Required(),
 		// Transfer links are symmetric; create/delete both sides atomically via one service method.
@@ -33,6 +34,7 @@ func (Transaction) Edges() []ent.Edge {
 
 func (Transaction) Indexes() []ent.Index {
 	return []ent.Index{
+		index.Edges("owner"),
 		index.Edges("account"),
 		index.Edges("category"),
 	}

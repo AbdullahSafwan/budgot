@@ -1567,6 +1567,22 @@ func (c *TransactionClient) GetX(ctx context.Context, id int) *Transaction {
 	return obj
 }
 
+// QueryOwner queries the owner edge of a Transaction.
+func (c *TransactionClient) QueryOwner(_m *Transaction) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(transaction.Table, transaction.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, transaction.OwnerTable, transaction.OwnerColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryAccount queries the account edge of a Transaction.
 func (c *TransactionClient) QueryAccount(_m *Transaction) *AccountQuery {
 	query := (&AccountClient{config: c.config}).Query()
@@ -1805,6 +1821,22 @@ func (c *UserClient) QueryBudgets(_m *User) *BudgetQuery {
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(budget.Table, budget.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.BudgetsTable, user.BudgetsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTransactions queries the transactions edge of a User.
+func (c *UserClient) QueryTransactions(_m *User) *TransactionQuery {
+	query := (&TransactionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(transaction.Table, transaction.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.TransactionsTable, user.TransactionsColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil

@@ -8,6 +8,7 @@ import (
 	"budgot/internal/ent/category"
 	"budgot/internal/ent/predicate"
 	"budgot/internal/ent/session"
+	"budgot/internal/ent/transaction"
 	"budgot/internal/ent/user"
 	"context"
 	"database/sql/driver"
@@ -23,14 +24,15 @@ import (
 // UserQuery is the builder for querying User entities.
 type UserQuery struct {
 	config
-	ctx            *QueryContext
-	order          []user.OrderOption
-	inters         []Interceptor
-	predicates     []predicate.User
-	withSessions   *SessionQuery
-	withAccounts   *AccountQuery
-	withCategories *CategoryQuery
-	withBudgets    *BudgetQuery
+	ctx              *QueryContext
+	order            []user.OrderOption
+	inters           []Interceptor
+	predicates       []predicate.User
+	withSessions     *SessionQuery
+	withAccounts     *AccountQuery
+	withCategories   *CategoryQuery
+	withBudgets      *BudgetQuery
+	withTransactions *TransactionQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -148,6 +150,28 @@ func (_q *UserQuery) QueryBudgets() *BudgetQuery {
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(budget.Table, budget.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.BudgetsTable, user.BudgetsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTransactions chains the current query on the "transactions" edge.
+func (_q *UserQuery) QueryTransactions() *TransactionQuery {
+	query := (&TransactionClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(transaction.Table, transaction.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.TransactionsTable, user.TransactionsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -342,15 +366,16 @@ func (_q *UserQuery) Clone() *UserQuery {
 		return nil
 	}
 	return &UserQuery{
-		config:         _q.config,
-		ctx:            _q.ctx.Clone(),
-		order:          append([]user.OrderOption{}, _q.order...),
-		inters:         append([]Interceptor{}, _q.inters...),
-		predicates:     append([]predicate.User{}, _q.predicates...),
-		withSessions:   _q.withSessions.Clone(),
-		withAccounts:   _q.withAccounts.Clone(),
-		withCategories: _q.withCategories.Clone(),
-		withBudgets:    _q.withBudgets.Clone(),
+		config:           _q.config,
+		ctx:              _q.ctx.Clone(),
+		order:            append([]user.OrderOption{}, _q.order...),
+		inters:           append([]Interceptor{}, _q.inters...),
+		predicates:       append([]predicate.User{}, _q.predicates...),
+		withSessions:     _q.withSessions.Clone(),
+		withAccounts:     _q.withAccounts.Clone(),
+		withCategories:   _q.withCategories.Clone(),
+		withBudgets:      _q.withBudgets.Clone(),
+		withTransactions: _q.withTransactions.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -398,6 +423,17 @@ func (_q *UserQuery) WithBudgets(opts ...func(*BudgetQuery)) *UserQuery {
 		opt(query)
 	}
 	_q.withBudgets = query
+	return _q
+}
+
+// WithTransactions tells the query-builder to eager-load the nodes that are connected to
+// the "transactions" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithTransactions(opts ...func(*TransactionQuery)) *UserQuery {
+	query := (&TransactionClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withTransactions = query
 	return _q
 }
 
@@ -479,11 +515,12 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = _q.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			_q.withSessions != nil,
 			_q.withAccounts != nil,
 			_q.withCategories != nil,
 			_q.withBudgets != nil,
+			_q.withTransactions != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -529,6 +566,13 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := _q.loadBudgets(ctx, query, nodes,
 			func(n *User) { n.Edges.Budgets = []*Budget{} },
 			func(n *User, e *Budget) { n.Edges.Budgets = append(n.Edges.Budgets, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withTransactions; query != nil {
+		if err := _q.loadTransactions(ctx, query, nodes,
+			func(n *User) { n.Edges.Transactions = []*Transaction{} },
+			func(n *User, e *Transaction) { n.Edges.Transactions = append(n.Edges.Transactions, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -641,6 +685,37 @@ func (_q *UserQuery) loadBudgets(ctx context.Context, query *BudgetQuery, nodes 
 	query.withFKs = true
 	query.Where(predicate.Budget(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(user.BudgetsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.user_id
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "user_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadTransactions(ctx context.Context, query *TransactionQuery, nodes []*User, init func(*User), assign func(*User, *Transaction)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Transaction(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.TransactionsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

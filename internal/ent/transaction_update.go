@@ -7,6 +7,7 @@ import (
 	"budgot/internal/ent/category"
 	"budgot/internal/ent/predicate"
 	"budgot/internal/ent/transaction"
+	"budgot/internal/ent/user"
 	"context"
 	"errors"
 	"fmt"
@@ -85,6 +86,17 @@ func (_u *TransactionUpdate) SetNillableTransactionDate(v *time.Time) *Transacti
 	return _u
 }
 
+// SetOwnerID sets the "owner" edge to the User entity by ID.
+func (_u *TransactionUpdate) SetOwnerID(id int) *TransactionUpdate {
+	_u.mutation.SetOwnerID(id)
+	return _u
+}
+
+// SetOwner sets the "owner" edge to the User entity.
+func (_u *TransactionUpdate) SetOwner(v *User) *TransactionUpdate {
+	return _u.SetOwnerID(v.ID)
+}
+
 // SetAccountID sets the "account" edge to the Account entity by ID.
 func (_u *TransactionUpdate) SetAccountID(id int) *TransactionUpdate {
 	_u.mutation.SetAccountID(id)
@@ -129,6 +141,12 @@ func (_u *TransactionUpdate) SetLinkedTransaction(v *Transaction) *TransactionUp
 // Mutation returns the TransactionMutation object of the builder.
 func (_u *TransactionUpdate) Mutation() *TransactionMutation {
 	return _u.mutation
+}
+
+// ClearOwner clears the "owner" edge to the User entity.
+func (_u *TransactionUpdate) ClearOwner() *TransactionUpdate {
+	_u.mutation.ClearOwner()
+	return _u
 }
 
 // ClearAccount clears the "account" edge to the Account entity.
@@ -178,6 +196,9 @@ func (_u *TransactionUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *TransactionUpdate) check() error {
+	if _u.mutation.OwnerCleared() && len(_u.mutation.OwnerIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Transaction.owner"`)
+	}
 	if _u.mutation.AccountCleared() && len(_u.mutation.AccountIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Transaction.account"`)
 	}
@@ -213,6 +234,35 @@ func (_u *TransactionUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if value, ok := _u.mutation.TransactionDate(); ok {
 		_spec.SetField(transaction.FieldTransactionDate, field.TypeTime, value)
+	}
+	if _u.mutation.OwnerCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   transaction.OwnerTable,
+			Columns: []string{transaction.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.OwnerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   transaction.OwnerTable,
+			Columns: []string{transaction.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.AccountCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -376,6 +426,17 @@ func (_u *TransactionUpdateOne) SetNillableTransactionDate(v *time.Time) *Transa
 	return _u
 }
 
+// SetOwnerID sets the "owner" edge to the User entity by ID.
+func (_u *TransactionUpdateOne) SetOwnerID(id int) *TransactionUpdateOne {
+	_u.mutation.SetOwnerID(id)
+	return _u
+}
+
+// SetOwner sets the "owner" edge to the User entity.
+func (_u *TransactionUpdateOne) SetOwner(v *User) *TransactionUpdateOne {
+	return _u.SetOwnerID(v.ID)
+}
+
 // SetAccountID sets the "account" edge to the Account entity by ID.
 func (_u *TransactionUpdateOne) SetAccountID(id int) *TransactionUpdateOne {
 	_u.mutation.SetAccountID(id)
@@ -420,6 +481,12 @@ func (_u *TransactionUpdateOne) SetLinkedTransaction(v *Transaction) *Transactio
 // Mutation returns the TransactionMutation object of the builder.
 func (_u *TransactionUpdateOne) Mutation() *TransactionMutation {
 	return _u.mutation
+}
+
+// ClearOwner clears the "owner" edge to the User entity.
+func (_u *TransactionUpdateOne) ClearOwner() *TransactionUpdateOne {
+	_u.mutation.ClearOwner()
+	return _u
 }
 
 // ClearAccount clears the "account" edge to the Account entity.
@@ -482,6 +549,9 @@ func (_u *TransactionUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *TransactionUpdateOne) check() error {
+	if _u.mutation.OwnerCleared() && len(_u.mutation.OwnerIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Transaction.owner"`)
+	}
 	if _u.mutation.AccountCleared() && len(_u.mutation.AccountIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Transaction.account"`)
 	}
@@ -534,6 +604,35 @@ func (_u *TransactionUpdateOne) sqlSave(ctx context.Context) (_node *Transaction
 	}
 	if value, ok := _u.mutation.TransactionDate(); ok {
 		_spec.SetField(transaction.FieldTransactionDate, field.TypeTime, value)
+	}
+	if _u.mutation.OwnerCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   transaction.OwnerTable,
+			Columns: []string{transaction.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.OwnerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   transaction.OwnerTable,
+			Columns: []string{transaction.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.AccountCleared() {
 		edge := &sqlgraph.EdgeSpec{
