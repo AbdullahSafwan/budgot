@@ -22,14 +22,13 @@ import (
 func NewRouter(db *ent.Client, cfg configs.Config) *chi.Mux {
 	router := chi.NewRouter()
 	router.Use(chimw.ClientIPFromXFFTrustedProxies(1))
+	router.Use(middleware.RequestLogger)
 	router.Use(chimw.Recoverer)
 	router.Use(middleware.SecurityHeaders(cfg.IsProduction()))
 
 	csrfKey := []byte(cfg.CSRFAuthKey)
 
 	if !cfg.IsProduction() {
-		//TODO Add logger
-		// router.Use(middleware.DevLogger)
 		router.Use(func(next http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				next.ServeHTTP(w, csrf.PlaintextHTTPRequest(r))
