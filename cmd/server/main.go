@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -20,16 +21,23 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	db, err := configs.NewDB()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
 	cfg, err := configs.LoadConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	lg, err := configs.NewLogger(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	slog.SetDefault(lg)
+
+	db, err := configs.NewDB()
+	if err != nil {
+		slog.Error("failed to open database", "error", err)
+		os.Exit(1)
+	}
+	defer db.Close()
 
 	r := router.NewRouter(db, cfg)
 
@@ -42,9 +50,10 @@ func main() {
 	}
 
 	go func() {
-		log.Println("Starting server on port", cfg.Port)
+		slog.Info("starting server", "port", cfg.Port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal(err)
+			slog.Error("server error", "error", err)
+			os.Exit(1)
 		}
 	}()
 
@@ -52,11 +61,12 @@ func main() {
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	<-stop
 
-	log.Println("Shutting down server...")
+	slog.Info("shutting down server")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal(err)
+		slog.Error("shutdown error", "error", err)
+		os.Exit(1)
 	}
-	log.Println("Server stopped")
+	slog.Info("server stopped")
 }

@@ -9,6 +9,7 @@ type Config struct {
 	Port        string
 	AppEnv      string
 	CSRFAuthKey string
+	LogLevel    string
 }
 
 func (c Config) IsProduction() bool {
@@ -36,10 +37,15 @@ func LoadConfig() (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+	logLevel, err := requireEnv("LOG_LEVEL")
+	if err != nil {
+		return Config{}, err
+	}
 
 	return Config{
 		Port:        port,
 		AppEnv:      appEnv,
 		CSRFAuthKey: csrfKey,
+		LogLevel:    logLevel,
 	}, nil
 }
