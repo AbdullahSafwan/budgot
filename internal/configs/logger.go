@@ -13,14 +13,7 @@ func NewLogger(cfg Config) (*slog.Logger, error) {
 		return nil, err
 	}
 
-	opts := &slog.HandlerOptions{Level: level}
-
-	var handler slog.Handler
-	if cfg.IsProduction() {
-		handler = slog.NewJSONHandler(os.Stdout, opts)
-	} else {
-		handler = slog.NewTextHandler(os.Stdout, opts)
-	}
+	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level})
 
 	return slog.New(handler).With(
 		slog.String("service", "budgot"),
