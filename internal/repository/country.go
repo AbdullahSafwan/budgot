@@ -15,6 +15,11 @@ func NewCountryRepository(client *ent.Client) *CountryRepository {
 	return &CountryRepository{client: client}
 }
 
+// WithTx returns a copy of the repository bound to the given transaction, so its
+func (r *CountryRepository) WithTx(tx *ent.Tx) *CountryRepository {
+	return &CountryRepository{client: tx.Client()}
+}
+
 func (r *CountryRepository) Create(ctx context.Context, code, name string) (*ent.Country, error) {
 	return r.client.Country.Create().
 		SetCode(code).

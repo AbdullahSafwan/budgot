@@ -19,6 +19,7 @@ func (Transaction) Fields() []ent.Field {
 		field.String("description").Optional(),
 		field.Time("transaction_date"),
 		field.Time("created_at").Default(time.Now).Immutable(),
+		field.String("transfer_group").Optional(),
 	}
 }
 
@@ -27,8 +28,6 @@ func (Transaction) Edges() []ent.Edge {
 		edge.From("owner", User.Type).Ref("transactions").Unique().Required(),
 		edge.From("account", Account.Type).Ref("transactions").Unique().Required(),
 		edge.From("category", Category.Type).Ref("transactions").Unique().Required(),
-		// Transfer links are symmetric; create/delete both sides atomically via one service method.
-		edge.To("linked_transaction", Transaction.Type).Unique(),
 	}
 }
 
@@ -37,5 +36,6 @@ func (Transaction) Indexes() []ent.Index {
 		index.Edges("owner"),
 		index.Edges("account"),
 		index.Edges("category"),
+		index.Fields("transfer_group"),
 	}
 }

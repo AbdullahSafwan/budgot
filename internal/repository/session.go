@@ -16,6 +16,11 @@ func NewSessionRepository(client *ent.Client) *SessionRepository {
 	return &SessionRepository{client: client}
 }
 
+// WithTx returns a copy of the repository bound to the given transaction, so its
+func (r *SessionRepository) WithTx(tx *ent.Tx) *SessionRepository {
+	return &SessionRepository{client: tx.Client()}
+}
+
 type CreateSessionParams struct {
 	ID            string
 	OwnerID       int

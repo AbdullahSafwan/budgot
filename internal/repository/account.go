@@ -16,6 +16,11 @@ func NewAccountRepository(client *ent.Client) *AccountRepository {
 	return &AccountRepository{client: client}
 }
 
+// WithTx returns a copy of// WithTx returns a copy of the repository bound to the given transaction, so its
+func (r *AccountRepository) WithTx(tx *ent.Tx) *AccountRepository {
+	return &AccountRepository{client: tx.Client()}
+}
+
 type CreateAccountParams struct {
 	OwnerID     int
 	CountryID   int

@@ -1,8 +1,8 @@
 package router
 
 import (
+	"html/template"
 	"net/http"
-	"text/template"
 	"time"
 
 	"budgot/internal/configs"

@@ -16,6 +16,11 @@ func NewBudgetRepository(client *ent.Client) *BudgetRepository {
 	return &BudgetRepository{client: client}
 }
 
+// WithTx returns a copy of the repository bound to the given transaction, so its
+func (r *BudgetRepository) WithTx(tx *ent.Tx) *BudgetRepository {
+	return &BudgetRepository{client: tx.Client()}
+}
+
 type CreateBudgetParams struct {
 	OwnerID    int
 	CategoryID int

@@ -75,6 +75,11 @@ func CreatedAt(v time.Time) predicate.Transaction {
 	return predicate.Transaction(sql.FieldEQ(FieldCreatedAt, v))
 }
 
+// TransferGroup applies equality check predicate on the "transfer_group" field. It's identical to TransferGroupEQ.
+func TransferGroup(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldEQ(FieldTransferGroup, v))
+}
+
 // AmountEQ applies the EQ predicate on the "amount" field.
 func AmountEQ(v int64) predicate.Transaction {
 	return predicate.Transaction(sql.FieldEQ(FieldAmount, v))
@@ -270,6 +275,81 @@ func CreatedAtLTE(v time.Time) predicate.Transaction {
 	return predicate.Transaction(sql.FieldLTE(FieldCreatedAt, v))
 }
 
+// TransferGroupEQ applies the EQ predicate on the "transfer_group" field.
+func TransferGroupEQ(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldEQ(FieldTransferGroup, v))
+}
+
+// TransferGroupNEQ applies the NEQ predicate on the "transfer_group" field.
+func TransferGroupNEQ(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldNEQ(FieldTransferGroup, v))
+}
+
+// TransferGroupIn applies the In predicate on the "transfer_group" field.
+func TransferGroupIn(vs ...string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldIn(FieldTransferGroup, vs...))
+}
+
+// TransferGroupNotIn applies the NotIn predicate on the "transfer_group" field.
+func TransferGroupNotIn(vs ...string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldNotIn(FieldTransferGroup, vs...))
+}
+
+// TransferGroupGT applies the GT predicate on the "transfer_group" field.
+func TransferGroupGT(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldGT(FieldTransferGroup, v))
+}
+
+// TransferGroupGTE applies the GTE predicate on the "transfer_group" field.
+func TransferGroupGTE(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldGTE(FieldTransferGroup, v))
+}
+
+// TransferGroupLT applies the LT predicate on the "transfer_group" field.
+func TransferGroupLT(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldLT(FieldTransferGroup, v))
+}
+
+// TransferGroupLTE applies the LTE predicate on the "transfer_group" field.
+func TransferGroupLTE(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldLTE(FieldTransferGroup, v))
+}
+
+// TransferGroupContains applies the Contains predicate on the "transfer_group" field.
+func TransferGroupContains(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldContains(FieldTransferGroup, v))
+}
+
+// TransferGroupHasPrefix applies the HasPrefix predicate on the "transfer_group" field.
+func TransferGroupHasPrefix(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldHasPrefix(FieldTransferGroup, v))
+}
+
+// TransferGroupHasSuffix applies the HasSuffix predicate on the "transfer_group" field.
+func TransferGroupHasSuffix(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldHasSuffix(FieldTransferGroup, v))
+}
+
+// TransferGroupIsNil applies the IsNil predicate on the "transfer_group" field.
+func TransferGroupIsNil() predicate.Transaction {
+	return predicate.Transaction(sql.FieldIsNull(FieldTransferGroup))
+}
+
+// TransferGroupNotNil applies the NotNil predicate on the "transfer_group" field.
+func TransferGroupNotNil() predicate.Transaction {
+	return predicate.Transaction(sql.FieldNotNull(FieldTransferGroup))
+}
+
+// TransferGroupEqualFold applies the EqualFold predicate on the "transfer_group" field.
+func TransferGroupEqualFold(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldEqualFold(FieldTransferGroup, v))
+}
+
+// TransferGroupContainsFold applies the ContainsFold predicate on the "transfer_group" field.
+func TransferGroupContainsFold(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldContainsFold(FieldTransferGroup, v))
+}
+
 // HasOwner applies the HasEdge predicate on the "owner" edge.
 func HasOwner() predicate.Transaction {
 	return predicate.Transaction(func(s *sql.Selector) {
@@ -331,29 +411,6 @@ func HasCategory() predicate.Transaction {
 func HasCategoryWith(preds ...predicate.Category) predicate.Transaction {
 	return predicate.Transaction(func(s *sql.Selector) {
 		step := newCategoryStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
-// HasLinkedTransaction applies the HasEdge predicate on the "linked_transaction" edge.
-func HasLinkedTransaction() predicate.Transaction {
-	return predicate.Transaction(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, LinkedTransactionTable, LinkedTransactionColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasLinkedTransactionWith applies the HasEdge predicate on the "linked_transaction" edge with a given conditions (other predicates).
-func HasLinkedTransactionWith(preds ...predicate.Transaction) predicate.Transaction {
-	return predicate.Transaction(func(s *sql.Selector) {
-		step := newLinkedTransactionStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

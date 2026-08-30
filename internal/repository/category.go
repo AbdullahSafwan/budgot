@@ -16,6 +16,11 @@ func NewCategoryRepository(client *ent.Client) *CategoryRepository {
 	return &CategoryRepository{client: client}
 }
 
+// WithTx returns a copy of the repository bound to the given transaction, so its
+func (r *CategoryRepository) WithTx(tx *ent.Tx) *CategoryRepository {
+	return &CategoryRepository{client: tx.Client()}
+}
+
 type CreateCategoryParams struct {
 	OwnerID int
 	Name    string

@@ -86,6 +86,26 @@ func (_u *TransactionUpdate) SetNillableTransactionDate(v *time.Time) *Transacti
 	return _u
 }
 
+// SetTransferGroup sets the "transfer_group" field.
+func (_u *TransactionUpdate) SetTransferGroup(v string) *TransactionUpdate {
+	_u.mutation.SetTransferGroup(v)
+	return _u
+}
+
+// SetNillableTransferGroup sets the "transfer_group" field if the given value is not nil.
+func (_u *TransactionUpdate) SetNillableTransferGroup(v *string) *TransactionUpdate {
+	if v != nil {
+		_u.SetTransferGroup(*v)
+	}
+	return _u
+}
+
+// ClearTransferGroup clears the value of the "transfer_group" field.
+func (_u *TransactionUpdate) ClearTransferGroup() *TransactionUpdate {
+	_u.mutation.ClearTransferGroup()
+	return _u
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by ID.
 func (_u *TransactionUpdate) SetOwnerID(id int) *TransactionUpdate {
 	_u.mutation.SetOwnerID(id)
@@ -119,25 +139,6 @@ func (_u *TransactionUpdate) SetCategory(v *Category) *TransactionUpdate {
 	return _u.SetCategoryID(v.ID)
 }
 
-// SetLinkedTransactionID sets the "linked_transaction" edge to the Transaction entity by ID.
-func (_u *TransactionUpdate) SetLinkedTransactionID(id int) *TransactionUpdate {
-	_u.mutation.SetLinkedTransactionID(id)
-	return _u
-}
-
-// SetNillableLinkedTransactionID sets the "linked_transaction" edge to the Transaction entity by ID if the given value is not nil.
-func (_u *TransactionUpdate) SetNillableLinkedTransactionID(id *int) *TransactionUpdate {
-	if id != nil {
-		_u = _u.SetLinkedTransactionID(*id)
-	}
-	return _u
-}
-
-// SetLinkedTransaction sets the "linked_transaction" edge to the Transaction entity.
-func (_u *TransactionUpdate) SetLinkedTransaction(v *Transaction) *TransactionUpdate {
-	return _u.SetLinkedTransactionID(v.ID)
-}
-
 // Mutation returns the TransactionMutation object of the builder.
 func (_u *TransactionUpdate) Mutation() *TransactionMutation {
 	return _u.mutation
@@ -158,12 +159,6 @@ func (_u *TransactionUpdate) ClearAccount() *TransactionUpdate {
 // ClearCategory clears the "category" edge to the Category entity.
 func (_u *TransactionUpdate) ClearCategory() *TransactionUpdate {
 	_u.mutation.ClearCategory()
-	return _u
-}
-
-// ClearLinkedTransaction clears the "linked_transaction" edge to the Transaction entity.
-func (_u *TransactionUpdate) ClearLinkedTransaction() *TransactionUpdate {
-	_u.mutation.ClearLinkedTransaction()
 	return _u
 }
 
@@ -234,6 +229,12 @@ func (_u *TransactionUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if value, ok := _u.mutation.TransactionDate(); ok {
 		_spec.SetField(transaction.FieldTransactionDate, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.TransferGroup(); ok {
+		_spec.SetField(transaction.FieldTransferGroup, field.TypeString, value)
+	}
+	if _u.mutation.TransferGroupCleared() {
+		_spec.ClearField(transaction.FieldTransferGroup, field.TypeString)
 	}
 	if _u.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -322,35 +323,6 @@ func (_u *TransactionUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if _u.mutation.LinkedTransactionCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
-			Inverse: false,
-			Table:   transaction.LinkedTransactionTable,
-			Columns: []string{transaction.LinkedTransactionColumn},
-			Bidi:    true,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(transaction.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.LinkedTransactionIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
-			Inverse: false,
-			Table:   transaction.LinkedTransactionTable,
-			Columns: []string{transaction.LinkedTransactionColumn},
-			Bidi:    true,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(transaction.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{transaction.Label}
@@ -426,6 +398,26 @@ func (_u *TransactionUpdateOne) SetNillableTransactionDate(v *time.Time) *Transa
 	return _u
 }
 
+// SetTransferGroup sets the "transfer_group" field.
+func (_u *TransactionUpdateOne) SetTransferGroup(v string) *TransactionUpdateOne {
+	_u.mutation.SetTransferGroup(v)
+	return _u
+}
+
+// SetNillableTransferGroup sets the "transfer_group" field if the given value is not nil.
+func (_u *TransactionUpdateOne) SetNillableTransferGroup(v *string) *TransactionUpdateOne {
+	if v != nil {
+		_u.SetTransferGroup(*v)
+	}
+	return _u
+}
+
+// ClearTransferGroup clears the value of the "transfer_group" field.
+func (_u *TransactionUpdateOne) ClearTransferGroup() *TransactionUpdateOne {
+	_u.mutation.ClearTransferGroup()
+	return _u
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by ID.
 func (_u *TransactionUpdateOne) SetOwnerID(id int) *TransactionUpdateOne {
 	_u.mutation.SetOwnerID(id)
@@ -459,25 +451,6 @@ func (_u *TransactionUpdateOne) SetCategory(v *Category) *TransactionUpdateOne {
 	return _u.SetCategoryID(v.ID)
 }
 
-// SetLinkedTransactionID sets the "linked_transaction" edge to the Transaction entity by ID.
-func (_u *TransactionUpdateOne) SetLinkedTransactionID(id int) *TransactionUpdateOne {
-	_u.mutation.SetLinkedTransactionID(id)
-	return _u
-}
-
-// SetNillableLinkedTransactionID sets the "linked_transaction" edge to the Transaction entity by ID if the given value is not nil.
-func (_u *TransactionUpdateOne) SetNillableLinkedTransactionID(id *int) *TransactionUpdateOne {
-	if id != nil {
-		_u = _u.SetLinkedTransactionID(*id)
-	}
-	return _u
-}
-
-// SetLinkedTransaction sets the "linked_transaction" edge to the Transaction entity.
-func (_u *TransactionUpdateOne) SetLinkedTransaction(v *Transaction) *TransactionUpdateOne {
-	return _u.SetLinkedTransactionID(v.ID)
-}
-
 // Mutation returns the TransactionMutation object of the builder.
 func (_u *TransactionUpdateOne) Mutation() *TransactionMutation {
 	return _u.mutation
@@ -498,12 +471,6 @@ func (_u *TransactionUpdateOne) ClearAccount() *TransactionUpdateOne {
 // ClearCategory clears the "category" edge to the Category entity.
 func (_u *TransactionUpdateOne) ClearCategory() *TransactionUpdateOne {
 	_u.mutation.ClearCategory()
-	return _u
-}
-
-// ClearLinkedTransaction clears the "linked_transaction" edge to the Transaction entity.
-func (_u *TransactionUpdateOne) ClearLinkedTransaction() *TransactionUpdateOne {
-	_u.mutation.ClearLinkedTransaction()
 	return _u
 }
 
@@ -605,6 +572,12 @@ func (_u *TransactionUpdateOne) sqlSave(ctx context.Context) (_node *Transaction
 	if value, ok := _u.mutation.TransactionDate(); ok {
 		_spec.SetField(transaction.FieldTransactionDate, field.TypeTime, value)
 	}
+	if value, ok := _u.mutation.TransferGroup(); ok {
+		_spec.SetField(transaction.FieldTransferGroup, field.TypeString, value)
+	}
+	if _u.mutation.TransferGroupCleared() {
+		_spec.ClearField(transaction.FieldTransferGroup, field.TypeString)
+	}
 	if _u.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -685,35 +658,6 @@ func (_u *TransactionUpdateOne) sqlSave(ctx context.Context) (_node *Transaction
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(category.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.LinkedTransactionCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
-			Inverse: false,
-			Table:   transaction.LinkedTransactionTable,
-			Columns: []string{transaction.LinkedTransactionColumn},
-			Bidi:    true,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(transaction.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.LinkedTransactionIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
-			Inverse: false,
-			Table:   transaction.LinkedTransactionTable,
-			Columns: []string{transaction.LinkedTransactionColumn},
-			Bidi:    true,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(transaction.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
