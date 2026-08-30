@@ -4872,26 +4872,25 @@ func (m *SessionMutation) ResetEdge(name string) error {
 // TransactionMutation represents an operation that mutates the Transaction nodes in the graph.
 type TransactionMutation struct {
 	config
-	op                        Op
-	typ                       string
-	id                        *int
-	amount                    *int64
-	addamount                 *int64
-	description               *string
-	transaction_date          *time.Time
-	created_at                *time.Time
-	clearedFields             map[string]struct{}
-	owner                     *int
-	clearedowner              bool
-	account                   *int
-	clearedaccount            bool
-	category                  *int
-	clearedcategory           bool
-	linked_transaction        *int
-	clearedlinked_transaction bool
-	done                      bool
-	oldValue                  func(context.Context) (*Transaction, error)
-	predicates                []predicate.Transaction
+	op               Op
+	typ              string
+	id               *int
+	amount           *int64
+	addamount        *int64
+	description      *string
+	transaction_date *time.Time
+	created_at       *time.Time
+	transfer_group   *string
+	clearedFields    map[string]struct{}
+	owner            *int
+	clearedowner     bool
+	account          *int
+	clearedaccount   bool
+	category         *int
+	clearedcategory  bool
+	done             bool
+	oldValue         func(context.Context) (*Transaction, error)
+	predicates       []predicate.Transaction
 }
 
 var _ ent.Mutation = (*TransactionMutation)(nil)
@@ -5169,6 +5168,55 @@ func (m *TransactionMutation) ResetCreatedAt() {
 	m.created_at = nil
 }
 
+// SetTransferGroup sets the "transfer_group" field.
+func (m *TransactionMutation) SetTransferGroup(s string) {
+	m.transfer_group = &s
+}
+
+// TransferGroup returns the value of the "transfer_group" field in the mutation.
+func (m *TransactionMutation) TransferGroup() (r string, exists bool) {
+	v := m.transfer_group
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTransferGroup returns the old "transfer_group" field's value of the Transaction entity.
+// If the Transaction object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransactionMutation) OldTransferGroup(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTransferGroup is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTransferGroup requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTransferGroup: %w", err)
+	}
+	return oldValue.TransferGroup, nil
+}
+
+// ClearTransferGroup clears the value of the "transfer_group" field.
+func (m *TransactionMutation) ClearTransferGroup() {
+	m.transfer_group = nil
+	m.clearedFields[transaction.FieldTransferGroup] = struct{}{}
+}
+
+// TransferGroupCleared returns if the "transfer_group" field was cleared in this mutation.
+func (m *TransactionMutation) TransferGroupCleared() bool {
+	_, ok := m.clearedFields[transaction.FieldTransferGroup]
+	return ok
+}
+
+// ResetTransferGroup resets all changes to the "transfer_group" field.
+func (m *TransactionMutation) ResetTransferGroup() {
+	m.transfer_group = nil
+	delete(m.clearedFields, transaction.FieldTransferGroup)
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by id.
 func (m *TransactionMutation) SetOwnerID(id int) {
 	m.owner = &id
@@ -5286,45 +5334,6 @@ func (m *TransactionMutation) ResetCategory() {
 	m.clearedcategory = false
 }
 
-// SetLinkedTransactionID sets the "linked_transaction" edge to the Transaction entity by id.
-func (m *TransactionMutation) SetLinkedTransactionID(id int) {
-	m.linked_transaction = &id
-}
-
-// ClearLinkedTransaction clears the "linked_transaction" edge to the Transaction entity.
-func (m *TransactionMutation) ClearLinkedTransaction() {
-	m.clearedlinked_transaction = true
-}
-
-// LinkedTransactionCleared reports if the "linked_transaction" edge to the Transaction entity was cleared.
-func (m *TransactionMutation) LinkedTransactionCleared() bool {
-	return m.clearedlinked_transaction
-}
-
-// LinkedTransactionID returns the "linked_transaction" edge ID in the mutation.
-func (m *TransactionMutation) LinkedTransactionID() (id int, exists bool) {
-	if m.linked_transaction != nil {
-		return *m.linked_transaction, true
-	}
-	return
-}
-
-// LinkedTransactionIDs returns the "linked_transaction" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// LinkedTransactionID instead. It exists only for internal usage by the builders.
-func (m *TransactionMutation) LinkedTransactionIDs() (ids []int) {
-	if id := m.linked_transaction; id != nil {
-		ids = append(ids, *id)
-	}
-	return
-}
-
-// ResetLinkedTransaction resets all changes to the "linked_transaction" edge.
-func (m *TransactionMutation) ResetLinkedTransaction() {
-	m.linked_transaction = nil
-	m.clearedlinked_transaction = false
-}
-
 // Where appends a list predicates to the TransactionMutation builder.
 func (m *TransactionMutation) Where(ps ...predicate.Transaction) {
 	m.predicates = append(m.predicates, ps...)
@@ -5359,7 +5368,7 @@ func (m *TransactionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TransactionMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 5)
 	if m.amount != nil {
 		fields = append(fields, transaction.FieldAmount)
 	}
@@ -5371,6 +5380,9 @@ func (m *TransactionMutation) Fields() []string {
 	}
 	if m.created_at != nil {
 		fields = append(fields, transaction.FieldCreatedAt)
+	}
+	if m.transfer_group != nil {
+		fields = append(fields, transaction.FieldTransferGroup)
 	}
 	return fields
 }
@@ -5388,6 +5400,8 @@ func (m *TransactionMutation) Field(name string) (ent.Value, bool) {
 		return m.TransactionDate()
 	case transaction.FieldCreatedAt:
 		return m.CreatedAt()
+	case transaction.FieldTransferGroup:
+		return m.TransferGroup()
 	}
 	return nil, false
 }
@@ -5405,6 +5419,8 @@ func (m *TransactionMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldTransactionDate(ctx)
 	case transaction.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
+	case transaction.FieldTransferGroup:
+		return m.OldTransferGroup(ctx)
 	}
 	return nil, fmt.Errorf("unknown Transaction field %s", name)
 }
@@ -5441,6 +5457,13 @@ func (m *TransactionMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCreatedAt(v)
+		return nil
+	case transaction.FieldTransferGroup:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTransferGroup(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Transaction field %s", name)
@@ -5490,6 +5513,9 @@ func (m *TransactionMutation) ClearedFields() []string {
 	if m.FieldCleared(transaction.FieldDescription) {
 		fields = append(fields, transaction.FieldDescription)
 	}
+	if m.FieldCleared(transaction.FieldTransferGroup) {
+		fields = append(fields, transaction.FieldTransferGroup)
+	}
 	return fields
 }
 
@@ -5506,6 +5532,9 @@ func (m *TransactionMutation) ClearField(name string) error {
 	switch name {
 	case transaction.FieldDescription:
 		m.ClearDescription()
+		return nil
+	case transaction.FieldTransferGroup:
+		m.ClearTransferGroup()
 		return nil
 	}
 	return fmt.Errorf("unknown Transaction nullable field %s", name)
@@ -5527,13 +5556,16 @@ func (m *TransactionMutation) ResetField(name string) error {
 	case transaction.FieldCreatedAt:
 		m.ResetCreatedAt()
 		return nil
+	case transaction.FieldTransferGroup:
+		m.ResetTransferGroup()
+		return nil
 	}
 	return fmt.Errorf("unknown Transaction field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *TransactionMutation) AddedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 3)
 	if m.owner != nil {
 		edges = append(edges, transaction.EdgeOwner)
 	}
@@ -5542,9 +5574,6 @@ func (m *TransactionMutation) AddedEdges() []string {
 	}
 	if m.category != nil {
 		edges = append(edges, transaction.EdgeCategory)
-	}
-	if m.linked_transaction != nil {
-		edges = append(edges, transaction.EdgeLinkedTransaction)
 	}
 	return edges
 }
@@ -5565,17 +5594,13 @@ func (m *TransactionMutation) AddedIDs(name string) []ent.Value {
 		if id := m.category; id != nil {
 			return []ent.Value{*id}
 		}
-	case transaction.EdgeLinkedTransaction:
-		if id := m.linked_transaction; id != nil {
-			return []ent.Value{*id}
-		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *TransactionMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 3)
 	return edges
 }
 
@@ -5587,7 +5612,7 @@ func (m *TransactionMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *TransactionMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 3)
 	if m.clearedowner {
 		edges = append(edges, transaction.EdgeOwner)
 	}
@@ -5596,9 +5621,6 @@ func (m *TransactionMutation) ClearedEdges() []string {
 	}
 	if m.clearedcategory {
 		edges = append(edges, transaction.EdgeCategory)
-	}
-	if m.clearedlinked_transaction {
-		edges = append(edges, transaction.EdgeLinkedTransaction)
 	}
 	return edges
 }
@@ -5613,8 +5635,6 @@ func (m *TransactionMutation) EdgeCleared(name string) bool {
 		return m.clearedaccount
 	case transaction.EdgeCategory:
 		return m.clearedcategory
-	case transaction.EdgeLinkedTransaction:
-		return m.clearedlinked_transaction
 	}
 	return false
 }
@@ -5632,9 +5652,6 @@ func (m *TransactionMutation) ClearEdge(name string) error {
 	case transaction.EdgeCategory:
 		m.ClearCategory()
 		return nil
-	case transaction.EdgeLinkedTransaction:
-		m.ClearLinkedTransaction()
-		return nil
 	}
 	return fmt.Errorf("unknown Transaction unique edge %s", name)
 }
@@ -5651,9 +5668,6 @@ func (m *TransactionMutation) ResetEdge(name string) error {
 		return nil
 	case transaction.EdgeCategory:
 		m.ResetCategory()
-		return nil
-	case transaction.EdgeLinkedTransaction:
-		m.ResetLinkedTransaction()
 		return nil
 	}
 	return fmt.Errorf("unknown Transaction edge %s", name)

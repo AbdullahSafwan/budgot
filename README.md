@@ -2,16 +2,21 @@
 
 A personal budget tracking app — single Go binary, server-rendered HTML (`html/template`), no SPA. Built for personal, multi-country, multi-currency use.
 
-Full design details, schema, and the reasoning behind every architectural decision live in [budget-app-specification.md](budget-app-specification.md) — this file is just the quick-start.
+## Goals
 
-## Status
-
-- **Authentication** — done. Login, logout, session management, CSRF, rate limiting, audit logging, security headers.
-- **Budgeting** (accounts, categories, transactions, budgets) — designed, not yet implemented.
+- Server-rendered HTML, clean layered architecture, easy to extend
 
 ## Tech stack
 
-Go, chi router, SQLite (`modernc.org/sqlite`, no CGO), Ent ORM with Atlas-managed migrations, `gorilla/csrf`, `go-chi/httprate`, `html/template` served via `go:embed`.
+Go, chi router, SQLite (`modernc.org/sqlite`, no CGO), Ent ORM with Atlas-managed migrations, `gorilla/csrf`, `go-chi/httprate`, `html/template` served via `go:embed`, bcrypt.
+
+## How it works
+
+Budgot is **country-first**: each country is effectively a separate profile, with its own accounts, transactions, and budgets. A combined cross-country view exists, but it's secondary — the primary UX is picking a country and seeing only that country's data.
+
+Currencies are **siloed** — no FX conversion, no cross-currency netting. An account belongs to one country and one currency, chosen independently (a country's accounts can span currencies); a budget is scoped by category, country, *and* currency for the same reason. Categories are the one thing shared across countries, since "Groceries" or "Rent" mean the same thing everywhere.
+
+A transaction's `amount` is **signed**, independent of its category: negative means money left the account, positive means it arrived. A transfer between two accounts is just two transactions — one leg per account, opposite signs, linked by a shared `transfer_group` — rather than full double-entry bookkeeping.
 
 ## Setup
 

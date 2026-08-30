@@ -21,15 +21,14 @@ import (
 // TransactionQuery is the builder for querying Transaction entities.
 type TransactionQuery struct {
 	config
-	ctx                   *QueryContext
-	order                 []transaction.OrderOption
-	inters                []Interceptor
-	predicates            []predicate.Transaction
-	withOwner             *UserQuery
-	withAccount           *AccountQuery
-	withCategory          *CategoryQuery
-	withLinkedTransaction *TransactionQuery
-	withFKs               bool
+	ctx          *QueryContext
+	order        []transaction.OrderOption
+	inters       []Interceptor
+	predicates   []predicate.Transaction
+	withOwner    *UserQuery
+	withAccount  *AccountQuery
+	withCategory *CategoryQuery
+	withFKs      bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -125,28 +124,6 @@ func (_q *TransactionQuery) QueryCategory() *CategoryQuery {
 			sqlgraph.From(transaction.Table, transaction.FieldID, selector),
 			sqlgraph.To(category.Table, category.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, transaction.CategoryTable, transaction.CategoryColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryLinkedTransaction chains the current query on the "linked_transaction" edge.
-func (_q *TransactionQuery) QueryLinkedTransaction() *TransactionQuery {
-	query := (&TransactionClient{config: _q.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := _q.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := _q.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(transaction.Table, transaction.FieldID, selector),
-			sqlgraph.To(transaction.Table, transaction.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, transaction.LinkedTransactionTable, transaction.LinkedTransactionColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -341,15 +318,14 @@ func (_q *TransactionQuery) Clone() *TransactionQuery {
 		return nil
 	}
 	return &TransactionQuery{
-		config:                _q.config,
-		ctx:                   _q.ctx.Clone(),
-		order:                 append([]transaction.OrderOption{}, _q.order...),
-		inters:                append([]Interceptor{}, _q.inters...),
-		predicates:            append([]predicate.Transaction{}, _q.predicates...),
-		withOwner:             _q.withOwner.Clone(),
-		withAccount:           _q.withAccount.Clone(),
-		withCategory:          _q.withCategory.Clone(),
-		withLinkedTransaction: _q.withLinkedTransaction.Clone(),
+		config:       _q.config,
+		ctx:          _q.ctx.Clone(),
+		order:        append([]transaction.OrderOption{}, _q.order...),
+		inters:       append([]Interceptor{}, _q.inters...),
+		predicates:   append([]predicate.Transaction{}, _q.predicates...),
+		withOwner:    _q.withOwner.Clone(),
+		withAccount:  _q.withAccount.Clone(),
+		withCategory: _q.withCategory.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -386,17 +362,6 @@ func (_q *TransactionQuery) WithCategory(opts ...func(*CategoryQuery)) *Transact
 		opt(query)
 	}
 	_q.withCategory = query
-	return _q
-}
-
-// WithLinkedTransaction tells the query-builder to eager-load the nodes that are connected to
-// the "linked_transaction" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *TransactionQuery) WithLinkedTransaction(opts ...func(*TransactionQuery)) *TransactionQuery {
-	query := (&TransactionClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	_q.withLinkedTransaction = query
 	return _q
 }
 
@@ -479,14 +444,13 @@ func (_q *TransactionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 		nodes       = []*Transaction{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [3]bool{
 			_q.withOwner != nil,
 			_q.withAccount != nil,
 			_q.withCategory != nil,
-			_q.withLinkedTransaction != nil,
 		}
 	)
-	if _q.withOwner != nil || _q.withAccount != nil || _q.withCategory != nil || _q.withLinkedTransaction != nil {
+	if _q.withOwner != nil || _q.withAccount != nil || _q.withCategory != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -525,12 +489,6 @@ func (_q *TransactionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	if query := _q.withCategory; query != nil {
 		if err := _q.loadCategory(ctx, query, nodes, nil,
 			func(n *Transaction, e *Category) { n.Edges.Category = e }); err != nil {
-			return nil, err
-		}
-	}
-	if query := _q.withLinkedTransaction; query != nil {
-		if err := _q.loadLinkedTransaction(ctx, query, nodes, nil,
-			func(n *Transaction, e *Transaction) { n.Edges.LinkedTransaction = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -626,38 +584,6 @@ func (_q *TransactionQuery) loadCategory(ctx context.Context, query *CategoryQue
 		nodes, ok := nodeids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "category_id" returned %v`, n.ID)
-		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
-	}
-	return nil
-}
-func (_q *TransactionQuery) loadLinkedTransaction(ctx context.Context, query *TransactionQuery, nodes []*Transaction, init func(*Transaction), assign func(*Transaction, *Transaction)) error {
-	ids := make([]int, 0, len(nodes))
-	nodeids := make(map[int][]*Transaction)
-	for i := range nodes {
-		if nodes[i].transaction_linked_transaction == nil {
-			continue
-		}
-		fk := *nodes[i].transaction_linked_transaction
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
-	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(transaction.IDIn(ids...))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "transaction_linked_transaction" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)

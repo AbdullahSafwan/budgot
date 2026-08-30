@@ -1615,22 +1615,6 @@ func (c *TransactionClient) QueryCategory(_m *Transaction) *CategoryQuery {
 	return query
 }
 
-// QueryLinkedTransaction queries the linked_transaction edge of a Transaction.
-func (c *TransactionClient) QueryLinkedTransaction(_m *Transaction) *TransactionQuery {
-	query := (&TransactionClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(transaction.Table, transaction.FieldID, id),
-			sqlgraph.To(transaction.Table, transaction.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, transaction.LinkedTransactionTable, transaction.LinkedTransactionColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
 // Hooks returns the client hooks.
 func (c *TransactionClient) Hooks() []Hook {
 	return c.hooks.Transaction

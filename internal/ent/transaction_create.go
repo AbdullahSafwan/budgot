@@ -63,6 +63,20 @@ func (_c *TransactionCreate) SetNillableCreatedAt(v *time.Time) *TransactionCrea
 	return _c
 }
 
+// SetTransferGroup sets the "transfer_group" field.
+func (_c *TransactionCreate) SetTransferGroup(v string) *TransactionCreate {
+	_c.mutation.SetTransferGroup(v)
+	return _c
+}
+
+// SetNillableTransferGroup sets the "transfer_group" field if the given value is not nil.
+func (_c *TransactionCreate) SetNillableTransferGroup(v *string) *TransactionCreate {
+	if v != nil {
+		_c.SetTransferGroup(*v)
+	}
+	return _c
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by ID.
 func (_c *TransactionCreate) SetOwnerID(id int) *TransactionCreate {
 	_c.mutation.SetOwnerID(id)
@@ -94,25 +108,6 @@ func (_c *TransactionCreate) SetCategoryID(id int) *TransactionCreate {
 // SetCategory sets the "category" edge to the Category entity.
 func (_c *TransactionCreate) SetCategory(v *Category) *TransactionCreate {
 	return _c.SetCategoryID(v.ID)
-}
-
-// SetLinkedTransactionID sets the "linked_transaction" edge to the Transaction entity by ID.
-func (_c *TransactionCreate) SetLinkedTransactionID(id int) *TransactionCreate {
-	_c.mutation.SetLinkedTransactionID(id)
-	return _c
-}
-
-// SetNillableLinkedTransactionID sets the "linked_transaction" edge to the Transaction entity by ID if the given value is not nil.
-func (_c *TransactionCreate) SetNillableLinkedTransactionID(id *int) *TransactionCreate {
-	if id != nil {
-		_c = _c.SetLinkedTransactionID(*id)
-	}
-	return _c
-}
-
-// SetLinkedTransaction sets the "linked_transaction" edge to the Transaction entity.
-func (_c *TransactionCreate) SetLinkedTransaction(v *Transaction) *TransactionCreate {
-	return _c.SetLinkedTransactionID(v.ID)
 }
 
 // Mutation returns the TransactionMutation object of the builder.
@@ -218,6 +213,10 @@ func (_c *TransactionCreate) createSpec() (*Transaction, *sqlgraph.CreateSpec) {
 		_spec.SetField(transaction.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
+	if value, ok := _c.mutation.TransferGroup(); ok {
+		_spec.SetField(transaction.FieldTransferGroup, field.TypeString, value)
+		_node.TransferGroup = value
+	}
 	if nodes := _c.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -267,23 +266,6 @@ func (_c *TransactionCreate) createSpec() (*Transaction, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.category_id = &nodes[0]
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := _c.mutation.LinkedTransactionIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
-			Inverse: false,
-			Table:   transaction.LinkedTransactionTable,
-			Columns: []string{transaction.LinkedTransactionColumn},
-			Bidi:    true,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(transaction.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_node.transaction_linked_transaction = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

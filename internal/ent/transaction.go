@@ -28,14 +28,15 @@ type Transaction struct {
 	TransactionDate time.Time `json:"transaction_date,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
+	// TransferGroup holds the value of the "transfer_group" field.
+	TransferGroup string `json:"transfer_group,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TransactionQuery when eager-loading is set.
-	Edges                          TransactionEdges `json:"edges"`
-	account_id                     *int
-	category_id                    *int
-	transaction_linked_transaction *int
-	user_id                        *int
-	selectValues                   sql.SelectValues
+	Edges        TransactionEdges `json:"edges"`
+	account_id   *int
+	category_id  *int
+	user_id      *int
+	selectValues sql.SelectValues
 }
 
 // TransactionEdges holds the relations/edges for other nodes in the graph.
@@ -46,11 +47,9 @@ type TransactionEdges struct {
 	Account *Account `json:"account,omitempty"`
 	// Category holds the value of the category edge.
 	Category *Category `json:"category,omitempty"`
-	// LinkedTransaction holds the value of the linked_transaction edge.
-	LinkedTransaction *Transaction `json:"linked_transaction,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [3]bool
 }
 
 // OwnerOrErr returns the Owner value or an error if the edge
@@ -86,17 +85,6 @@ func (e TransactionEdges) CategoryOrErr() (*Category, error) {
 	return nil, &NotLoadedError{edge: "category"}
 }
 
-// LinkedTransactionOrErr returns the LinkedTransaction value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e TransactionEdges) LinkedTransactionOrErr() (*Transaction, error) {
-	if e.LinkedTransaction != nil {
-		return e.LinkedTransaction, nil
-	} else if e.loadedTypes[3] {
-		return nil, &NotFoundError{label: transaction.Label}
-	}
-	return nil, &NotLoadedError{edge: "linked_transaction"}
-}
-
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Transaction) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -104,7 +92,7 @@ func (*Transaction) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case transaction.FieldID, transaction.FieldAmount:
 			values[i] = new(sql.NullInt64)
-		case transaction.FieldDescription:
+		case transaction.FieldDescription, transaction.FieldTransferGroup:
 			values[i] = new(sql.NullString)
 		case transaction.FieldTransactionDate, transaction.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -112,9 +100,7 @@ func (*Transaction) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case transaction.ForeignKeys[1]: // category_id
 			values[i] = new(sql.NullInt64)
-		case transaction.ForeignKeys[2]: // transaction_linked_transaction
-			values[i] = new(sql.NullInt64)
-		case transaction.ForeignKeys[3]: // user_id
+		case transaction.ForeignKeys[2]: // user_id
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -161,6 +147,12 @@ func (_m *Transaction) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.CreatedAt = value.Time
 			}
+		case transaction.FieldTransferGroup:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field transfer_group", values[i])
+			} else if value.Valid {
+				_m.TransferGroup = value.String
+			}
 		case transaction.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field account_id", value)
@@ -176,13 +168,6 @@ func (_m *Transaction) assignValues(columns []string, values []any) error {
 				*_m.category_id = int(value.Int64)
 			}
 		case transaction.ForeignKeys[2]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field transaction_linked_transaction", value)
-			} else if value.Valid {
-				_m.transaction_linked_transaction = new(int)
-				*_m.transaction_linked_transaction = int(value.Int64)
-			}
-		case transaction.ForeignKeys[3]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field user_id", value)
 			} else if value.Valid {
@@ -215,11 +200,6 @@ func (_m *Transaction) QueryAccount() *AccountQuery {
 // QueryCategory queries the "category" edge of the Transaction entity.
 func (_m *Transaction) QueryCategory() *CategoryQuery {
 	return NewTransactionClient(_m.config).QueryCategory(_m)
-}
-
-// QueryLinkedTransaction queries the "linked_transaction" edge of the Transaction entity.
-func (_m *Transaction) QueryLinkedTransaction() *TransactionQuery {
-	return NewTransactionClient(_m.config).QueryLinkedTransaction(_m)
 }
 
 // Update returns a builder for updating this Transaction.
@@ -256,6 +236,9 @@ func (_m *Transaction) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("transfer_group=")
+	builder.WriteString(_m.TransferGroup)
 	builder.WriteByte(')')
 	return builder.String()
 }

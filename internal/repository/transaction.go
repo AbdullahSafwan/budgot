@@ -20,6 +20,11 @@ func NewTransactionRepository(client *ent.Client) *TransactionRepository {
 	return &TransactionRepository{client: client}
 }
 
+// WithTx returns a copy of the repository bound to the given transaction, so its
+func (r *TransactionRepository) WithTx(tx *ent.Tx) *TransactionRepository {
+	return &TransactionRepository{client: tx.Client()}
+}
+
 type CreateTransactionParams struct {
 	OwnerID         int
 	AccountID       int
@@ -27,17 +32,21 @@ type CreateTransactionParams struct {
 	Amount          int64
 	Description     string
 	TransactionDate time.Time
+	TransferGroup   *string
 }
 
 func (r *TransactionRepository) Create(ctx context.Context, params CreateTransactionParams) (*ent.Transaction, error) {
-	return r.client.Transaction.Create().
+	c := r.client.Transaction.Create().
 		SetOwnerID(params.OwnerID).
 		SetAccountID(params.AccountID).
 		SetCategoryID(params.CategoryID).
 		SetAmount(params.Amount).
 		SetDescription(params.Description).
-		SetTransactionDate(params.TransactionDate).
-		Save(ctx)
+		SetTransactionDate(params.TransactionDate)
+	if params.TransferGroup != nil {
+		c = c.SetTransferGroup(*params.TransferGroup)
+	}
+	return c.Save(ctx)
 }
 
 func (r *TransactionRepository) FindByID(ctx context.Context, id int) (*ent.Transaction, error) {
@@ -50,21 +59,33 @@ func (r *TransactionRepository) ListByAccount(ctx context.Context, accountID int
 		All(ctx)
 }
 
-// links a transaction to another transaction (e.g. for transfers)
-func (r *TransactionRepository) SetLinkedTransaction(ctx context.Context, id, linkedID int) error {
-	_, err := r.client.Transaction.UpdateOneID(id).SetLinkedTransactionID(linkedID).Save(ctx)
+// SetTransferGroup sets the transfer group for a transaction. This is used to link two transactions that are part of the same transfer.
+func (r *TransactionRepository) SetTransferGroup(ctx context.Context, id int, group string) error {
+	_, err := r.client.Transaction.UpdateOneID(id).SetTransferGroup(group).Save(ctx)
 	return err
 }
 
+func (r *TransactionRepository) ListByTransferGroup(ctx context.Context, group string) ([]*ent.Transaction, error) {
+	return r.client.Transaction.Query().
+		Where(transaction.TransferGroupEQ(group)).
+		All(ctx)
+}
+
 func (r *TransactionRepository) SumByAccount(ctx context.Context, accountID int) (int64, error) {
-	sum, err := r.client.Transaction.Query().
+	var result []struct {
+		Total *int64 `json:"total"`
+	}
+	err := r.client.Transaction.Query().
 		Where(transaction.HasAccountWith(account.IDEQ(accountID))).
-		Aggregate(ent.Sum(transaction.FieldAmount)).
-		Int(ctx)
+		Aggregate(ent.As(ent.Sum(transaction.FieldAmount), "total")).
+		Scan(ctx, &result)
 	if err != nil {
 		return 0, err
 	}
-	return int64(sum), nil
+	if len(result) == 0 || result[0].Total == nil {
+		return 0, nil
+	}
+	return *result[0].Total, nil
 }
 
 // sums trx for a category per month/year, filtered by country and currency of the account
@@ -72,7 +93,10 @@ func (r *TransactionRepository) SumByCategoryAndPeriod(ctx context.Context, cate
 	start := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
 	end := start.AddDate(0, 1, 0)
 
-	sum, err := r.client.Transaction.Query().
+	var result []struct {
+		Total *int64 `json:"total"`
+	}
+	err := r.client.Transaction.Query().
 		Where(
 			transaction.HasCategoryWith(category.IDEQ(categoryID)),
 			transaction.HasAccountWith(
@@ -82,10 +106,13 @@ func (r *TransactionRepository) SumByCategoryAndPeriod(ctx context.Context, cate
 			transaction.TransactionDateGTE(start),
 			transaction.TransactionDateLT(end),
 		).
-		Aggregate(ent.Sum(transaction.FieldAmount)).
-		Int(ctx)
+		Aggregate(ent.As(ent.Sum(transaction.FieldAmount), "total")).
+		Scan(ctx, &result)
 	if err != nil {
 		return 0, err
 	}
-	return int64(sum), nil
+	if len(result) == 0 || result[0].Total == nil {
+		return 0, nil
+	}
+	return *result[0].Total, nil
 }

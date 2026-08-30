@@ -15,6 +15,11 @@ func NewCurrencyRepository(client *ent.Client) *CurrencyRepository {
 	return &CurrencyRepository{client: client}
 }
 
+// WithTx returns a copy of the repository bound to the given transaction, so its
+func (r *CurrencyRepository) WithTx(tx *ent.Tx) *CurrencyRepository {
+	return &CurrencyRepository{client: tx.Client()}
+}
+
 func (r *CurrencyRepository) Create(ctx context.Context, code, name, symbol string) (*ent.Currency, error) {
 	return r.client.Currency.Create().
 		SetCode(code).

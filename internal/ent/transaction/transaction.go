@@ -22,14 +22,14 @@ const (
 	FieldTransactionDate = "transaction_date"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
+	// FieldTransferGroup holds the string denoting the transfer_group field in the database.
+	FieldTransferGroup = "transfer_group"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
 	EdgeOwner = "owner"
 	// EdgeAccount holds the string denoting the account edge name in mutations.
 	EdgeAccount = "account"
 	// EdgeCategory holds the string denoting the category edge name in mutations.
 	EdgeCategory = "category"
-	// EdgeLinkedTransaction holds the string denoting the linked_transaction edge name in mutations.
-	EdgeLinkedTransaction = "linked_transaction"
 	// Table holds the table name of the transaction in the database.
 	Table = "transactions"
 	// OwnerTable is the table that holds the owner relation/edge.
@@ -53,10 +53,6 @@ const (
 	CategoryInverseTable = "categories"
 	// CategoryColumn is the table column denoting the category relation/edge.
 	CategoryColumn = "category_id"
-	// LinkedTransactionTable is the table that holds the linked_transaction relation/edge.
-	LinkedTransactionTable = "transactions"
-	// LinkedTransactionColumn is the table column denoting the linked_transaction relation/edge.
-	LinkedTransactionColumn = "transaction_linked_transaction"
 )
 
 // Columns holds all SQL columns for transaction fields.
@@ -66,6 +62,7 @@ var Columns = []string{
 	FieldDescription,
 	FieldTransactionDate,
 	FieldCreatedAt,
+	FieldTransferGroup,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "transactions"
@@ -73,7 +70,6 @@ var Columns = []string{
 var ForeignKeys = []string{
 	"account_id",
 	"category_id",
-	"transaction_linked_transaction",
 	"user_id",
 }
 
@@ -125,6 +121,11 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
 }
 
+// ByTransferGroup orders the results by the transfer_group field.
+func ByTransferGroup(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTransferGroup, opts...).ToFunc()
+}
+
 // ByOwnerField orders the results by owner field.
 func ByOwnerField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -143,13 +144,6 @@ func ByAccountField(field string, opts ...sql.OrderTermOption) OrderOption {
 func ByCategoryField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newCategoryStep(), sql.OrderByField(field, opts...))
-	}
-}
-
-// ByLinkedTransactionField orders the results by linked_transaction field.
-func ByLinkedTransactionField(field string, opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newLinkedTransactionStep(), sql.OrderByField(field, opts...))
 	}
 }
 func newOwnerStep() *sqlgraph.Step {
@@ -171,12 +165,5 @@ func newCategoryStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(CategoryInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, CategoryTable, CategoryColumn),
-	)
-}
-func newLinkedTransactionStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(Table, FieldID),
-		sqlgraph.Edge(sqlgraph.O2O, false, LinkedTransactionTable, LinkedTransactionColumn),
 	)
 }
