@@ -20,7 +20,7 @@ func NewTransactionRepository(client *ent.Client) *TransactionRepository {
 	return &TransactionRepository{client: client}
 }
 
-// WithTx returns a copy of the repository bound to the given transaction, so its
+// WithTx binds the repository to an existing transaction.
 func (r *TransactionRepository) WithTx(tx *ent.Tx) *TransactionRepository {
 	return &TransactionRepository{client: tx.Client()}
 }
@@ -59,7 +59,7 @@ func (r *TransactionRepository) ListByAccount(ctx context.Context, accountID int
 		All(ctx)
 }
 
-// SetTransferGroup sets the transfer group for a transaction. This is used to link two transactions that are part of the same transfer.
+// SetTransferGroup links a transaction to another as one leg of a transfer.
 func (r *TransactionRepository) SetTransferGroup(ctx context.Context, id int, group string) error {
 	_, err := r.client.Transaction.UpdateOneID(id).SetTransferGroup(group).Save(ctx)
 	return err

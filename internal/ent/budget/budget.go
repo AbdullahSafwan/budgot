@@ -20,6 +20,8 @@ const (
 	FieldYear = "year"
 	// FieldAmount holds the string denoting the amount field in the database.
 	FieldAmount = "amount"
+	// FieldIsActive holds the string denoting the is_active field in the database.
+	FieldIsActive = "is_active"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -70,6 +72,7 @@ var Columns = []string{
 	FieldMonth,
 	FieldYear,
 	FieldAmount,
+	FieldIsActive,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -103,6 +106,8 @@ var (
 	MonthValidator func(int) error
 	// AmountValidator is a validator for the "amount" field. It is called by the builders before save.
 	AmountValidator func(int64) error
+	// DefaultIsActive holds the default value on creation for the "is_active" field.
+	DefaultIsActive bool
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -132,6 +137,11 @@ func ByYear(opts ...sql.OrderTermOption) OrderOption {
 // ByAmount orders the results by the amount field.
 func ByAmount(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAmount, opts...).ToFunc()
+}
+
+// ByIsActive orders the results by the is_active field.
+func ByIsActive(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsActive, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.

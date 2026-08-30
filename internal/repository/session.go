@@ -16,7 +16,7 @@ func NewSessionRepository(client *ent.Client) *SessionRepository {
 	return &SessionRepository{client: client}
 }
 
-// WithTx returns a copy of the repository bound to the given transaction, so its
+// WithTx binds the repository to an existing transaction.
 func (r *SessionRepository) WithTx(tx *ent.Tx) *SessionRepository {
 	return &SessionRepository{client: tx.Client()}
 }
@@ -54,4 +54,11 @@ func (r *SessionRepository) UpdateLastSeen(ctx context.Context, id string, t tim
 
 func (r *SessionRepository) Delete(ctx context.Context, id string) error {
 	return r.client.Session.DeleteOneID(id).Exec(ctx)
+}
+
+// DeleteExpired hard-deletes sessions past their expiry (the one exception to soft-delete).
+func (r *SessionRepository) DeleteExpired(ctx context.Context, now time.Time) (int, error) {
+	return r.client.Session.Delete().
+		Where(session.ExpiresAtLT(now)).
+		Exec(ctx)
 }

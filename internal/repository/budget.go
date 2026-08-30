@@ -16,7 +16,7 @@ func NewBudgetRepository(client *ent.Client) *BudgetRepository {
 	return &BudgetRepository{client: client}
 }
 
-// WithTx returns a copy of the repository bound to the given transaction, so its
+// WithTx binds the repository to an existing transaction.
 func (r *BudgetRepository) WithTx(tx *ent.Tx) *BudgetRepository {
 	return &BudgetRepository{client: tx.Client()}
 }
@@ -49,6 +49,15 @@ func (r *BudgetRepository) FindByID(ctx context.Context, id int) (*ent.Budget, e
 
 func (r *BudgetRepository) ListByOwner(ctx context.Context, ownerID int) ([]*ent.Budget, error) {
 	return r.client.Budget.Query().
-		Where(budget.HasOwnerWith(user.IDEQ(ownerID))).
+		Where(
+			budget.HasOwnerWith(user.IDEQ(ownerID)),
+			budget.IsActiveEQ(true),
+		).
 		All(ctx)
+}
+
+// Delete soft-deletes a budget; rows are never hard-deleted.
+func (r *BudgetRepository) Delete(ctx context.Context, id int) error {
+	_, err := r.client.Budget.UpdateOneID(id).SetIsActive(false).Save(ctx)
+	return err
 }

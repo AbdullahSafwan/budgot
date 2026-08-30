@@ -95,6 +95,20 @@ func (_u *BudgetUpdate) AddAmount(v int64) *BudgetUpdate {
 	return _u
 }
 
+// SetIsActive sets the "is_active" field.
+func (_u *BudgetUpdate) SetIsActive(v bool) *BudgetUpdate {
+	_u.mutation.SetIsActive(v)
+	return _u
+}
+
+// SetNillableIsActive sets the "is_active" field if the given value is not nil.
+func (_u *BudgetUpdate) SetNillableIsActive(v *bool) *BudgetUpdate {
+	if v != nil {
+		_u.SetIsActive(*v)
+	}
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *BudgetUpdate) SetUpdatedAt(v time.Time) *BudgetUpdate {
 	_u.mutation.SetUpdatedAt(v)
@@ -266,6 +280,9 @@ func (_u *BudgetUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.AddedAmount(); ok {
 		_spec.AddField(budget.FieldAmount, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.IsActive(); ok {
+		_spec.SetField(budget.FieldIsActive, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(budget.FieldUpdatedAt, field.TypeTime, value)
@@ -466,6 +483,20 @@ func (_u *BudgetUpdateOne) SetNillableAmount(v *int64) *BudgetUpdateOne {
 // AddAmount adds value to the "amount" field.
 func (_u *BudgetUpdateOne) AddAmount(v int64) *BudgetUpdateOne {
 	_u.mutation.AddAmount(v)
+	return _u
+}
+
+// SetIsActive sets the "is_active" field.
+func (_u *BudgetUpdateOne) SetIsActive(v bool) *BudgetUpdateOne {
+	_u.mutation.SetIsActive(v)
+	return _u
+}
+
+// SetNillableIsActive sets the "is_active" field if the given value is not nil.
+func (_u *BudgetUpdateOne) SetNillableIsActive(v *bool) *BudgetUpdateOne {
+	if v != nil {
+		_u.SetIsActive(*v)
+	}
 	return _u
 }
 
@@ -670,6 +701,9 @@ func (_u *BudgetUpdateOne) sqlSave(ctx context.Context) (_node *Budget, err erro
 	}
 	if value, ok := _u.mutation.AddedAmount(); ok {
 		_spec.AddField(budget.FieldAmount, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.IsActive(); ok {
+		_spec.SetField(budget.FieldIsActive, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(budget.FieldUpdatedAt, field.TypeTime, value)

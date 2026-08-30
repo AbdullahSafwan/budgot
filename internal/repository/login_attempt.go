@@ -14,7 +14,7 @@ func NewLoginAttemptRepository(client *ent.Client) *LoginAttemptRepository {
 	return &LoginAttemptRepository{client: client}
 }
 
-// WithTx returns a copy of the repository bound to the given transaction, so its
+// WithTx binds the repository to an existing transaction.
 func (r *LoginAttemptRepository) WithTx(tx *ent.Tx) *LoginAttemptRepository {
 	return &LoginAttemptRepository{client: tx.Client()}
 }

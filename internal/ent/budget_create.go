@@ -42,6 +42,20 @@ func (_c *BudgetCreate) SetAmount(v int64) *BudgetCreate {
 	return _c
 }
 
+// SetIsActive sets the "is_active" field.
+func (_c *BudgetCreate) SetIsActive(v bool) *BudgetCreate {
+	_c.mutation.SetIsActive(v)
+	return _c
+}
+
+// SetNillableIsActive sets the "is_active" field if the given value is not nil.
+func (_c *BudgetCreate) SetNillableIsActive(v *bool) *BudgetCreate {
+	if v != nil {
+		_c.SetIsActive(*v)
+	}
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *BudgetCreate) SetCreatedAt(v time.Time) *BudgetCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -149,6 +163,10 @@ func (_c *BudgetCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *BudgetCreate) defaults() {
+	if _, ok := _c.mutation.IsActive(); !ok {
+		v := budget.DefaultIsActive
+		_c.mutation.SetIsActive(v)
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := budget.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -179,6 +197,9 @@ func (_c *BudgetCreate) check() error {
 		if err := budget.AmountValidator(v); err != nil {
 			return &ValidationError{Name: "amount", err: fmt.Errorf(`ent: validator failed for field "Budget.amount": %w`, err)}
 		}
+	}
+	if _, ok := _c.mutation.IsActive(); !ok {
+		return &ValidationError{Name: "is_active", err: errors.New(`ent: missing required field "Budget.is_active"`)}
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Budget.created_at"`)}
@@ -235,6 +256,10 @@ func (_c *BudgetCreate) createSpec() (*Budget, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Amount(); ok {
 		_spec.SetField(budget.FieldAmount, field.TypeInt64, value)
 		_node.Amount = value
+	}
+	if value, ok := _c.mutation.IsActive(); ok {
+		_spec.SetField(budget.FieldIsActive, field.TypeBool, value)
+		_node.IsActive = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(budget.FieldCreatedAt, field.TypeTime, value)

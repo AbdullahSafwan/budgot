@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -12,7 +13,6 @@ import (
 type contextKey string
 
 const userContextKey contextKey = "user"
-const idleTimeout = 30 * time.Minute
 
 type SessionStore interface {
 	FindByID(ctx context.Context, id string) (*ent.Session, error)
@@ -20,7 +20,7 @@ type SessionStore interface {
 	Delete(ctx context.Context, id string) error
 }
 
-func RequireAuth(sessions SessionStore) func(http.Handler) http.Handler {
+func RequireAuth(sessions SessionStore, idleTimeout time.Duration) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			cookie, err := r.Cookie("session")
@@ -45,18 +45,29 @@ func RequireAuth(sessions SessionStore) func(http.Handler) http.Handler {
 			}
 
 			now := time.Now()
-			if now.After(sess.ExpiresAt) || now.After(sess.LastSeen.Add(idleTimeout)) {
-				_ = sessions.Delete(r.Context(), sess.ID)
+			expired := now.After(sess.ExpiresAt) || now.After(sess.LastSeen.Add(idleTimeout))
+			hijacked := sess.UserAgentHash != hashUserAgent(r.UserAgent())
+			if expired || hijacked {
+				if err := sessions.Delete(r.Context(), sess.ID); err != nil {
+					slog.Error("failed to delete session", "error", err)
+				}
 				http.Redirect(w, r, "/login", http.StatusSeeOther)
 				return
 			}
 
-			_ = sessions.UpdateLastSeen(r.Context(), sess.ID, now)
+			if err := sessions.UpdateLastSeen(r.Context(), sess.ID, now); err != nil {
+				slog.Error("failed to update session last-seen", "error", err)
+			}
 
 			ctx := context.WithValue(r.Context(), userContextKey, sess.Edges.Owner)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+func hashUserAgent(ua string) string {
+	sum := sha256.Sum256([]byte(ua))
+	return hex.EncodeToString(sum[:])
 }
 
 func UserFromContext(ctx context.Context) *ent.User {

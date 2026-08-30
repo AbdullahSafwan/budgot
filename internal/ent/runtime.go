@@ -64,12 +64,16 @@ func init() {
 	budgetDescAmount := budgetFields[2].Descriptor()
 	// budget.AmountValidator is a validator for the "amount" field. It is called by the builders before save.
 	budget.AmountValidator = budgetDescAmount.Validators[0].(func(int64) error)
+	// budgetDescIsActive is the schema descriptor for is_active field.
+	budgetDescIsActive := budgetFields[3].Descriptor()
+	// budget.DefaultIsActive holds the default value on creation for the is_active field.
+	budget.DefaultIsActive = budgetDescIsActive.Default.(bool)
 	// budgetDescCreatedAt is the schema descriptor for created_at field.
-	budgetDescCreatedAt := budgetFields[3].Descriptor()
+	budgetDescCreatedAt := budgetFields[4].Descriptor()
 	// budget.DefaultCreatedAt holds the default value on creation for the created_at field.
 	budget.DefaultCreatedAt = budgetDescCreatedAt.Default.(func() time.Time)
 	// budgetDescUpdatedAt is the schema descriptor for updated_at field.
-	budgetDescUpdatedAt := budgetFields[4].Descriptor()
+	budgetDescUpdatedAt := budgetFields[5].Descriptor()
 	// budget.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	budget.DefaultUpdatedAt = budgetDescUpdatedAt.Default.(func() time.Time)
 	// budget.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

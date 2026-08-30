@@ -16,7 +16,7 @@ func NewCategoryRepository(client *ent.Client) *CategoryRepository {
 	return &CategoryRepository{client: client}
 }
 
-// WithTx returns a copy of the repository bound to the given transaction, so its
+// WithTx binds the repository to an existing transaction.
 func (r *CategoryRepository) WithTx(tx *ent.Tx) *CategoryRepository {
 	return &CategoryRepository{client: tx.Client()}
 }
@@ -43,6 +43,15 @@ func (r *CategoryRepository) FindByID(ctx context.Context, id int) (*ent.Categor
 
 func (r *CategoryRepository) ListByOwner(ctx context.Context, ownerID int) ([]*ent.Category, error) {
 	return r.client.Category.Query().
-		Where(category.HasOwnerWith(user.IDEQ(ownerID))).
+		Where(
+			category.HasOwnerWith(user.IDEQ(ownerID)),
+			category.IsActiveEQ(true),
+		).
 		All(ctx)
+}
+
+// Delete soft-deletes a category; the name becomes reusable once inactive.
+func (r *CategoryRepository) Delete(ctx context.Context, id int) error {
+	_, err := r.client.Category.UpdateOneID(id).SetIsActive(false).Save(ctx)
+	return err
 }

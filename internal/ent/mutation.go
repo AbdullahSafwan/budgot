@@ -867,6 +867,7 @@ type BudgetMutation struct {
 	addyear         *int
 	amount          *int64
 	addamount       *int64
+	is_active       *bool
 	created_at      *time.Time
 	updated_at      *time.Time
 	clearedFields   map[string]struct{}
@@ -1149,6 +1150,42 @@ func (m *BudgetMutation) ResetAmount() {
 	m.addamount = nil
 }
 
+// SetIsActive sets the "is_active" field.
+func (m *BudgetMutation) SetIsActive(b bool) {
+	m.is_active = &b
+}
+
+// IsActive returns the value of the "is_active" field in the mutation.
+func (m *BudgetMutation) IsActive() (r bool, exists bool) {
+	v := m.is_active
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsActive returns the old "is_active" field's value of the Budget entity.
+// If the Budget object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BudgetMutation) OldIsActive(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsActive is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsActive requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsActive: %w", err)
+	}
+	return oldValue.IsActive, nil
+}
+
+// ResetIsActive resets all changes to the "is_active" field.
+func (m *BudgetMutation) ResetIsActive() {
+	m.is_active = nil
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *BudgetMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -1411,7 +1448,7 @@ func (m *BudgetMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BudgetMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.month != nil {
 		fields = append(fields, budget.FieldMonth)
 	}
@@ -1420,6 +1457,9 @@ func (m *BudgetMutation) Fields() []string {
 	}
 	if m.amount != nil {
 		fields = append(fields, budget.FieldAmount)
+	}
+	if m.is_active != nil {
+		fields = append(fields, budget.FieldIsActive)
 	}
 	if m.created_at != nil {
 		fields = append(fields, budget.FieldCreatedAt)
@@ -1441,6 +1481,8 @@ func (m *BudgetMutation) Field(name string) (ent.Value, bool) {
 		return m.Year()
 	case budget.FieldAmount:
 		return m.Amount()
+	case budget.FieldIsActive:
+		return m.IsActive()
 	case budget.FieldCreatedAt:
 		return m.CreatedAt()
 	case budget.FieldUpdatedAt:
@@ -1460,6 +1502,8 @@ func (m *BudgetMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldYear(ctx)
 	case budget.FieldAmount:
 		return m.OldAmount(ctx)
+	case budget.FieldIsActive:
+		return m.OldIsActive(ctx)
 	case budget.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case budget.FieldUpdatedAt:
@@ -1493,6 +1537,13 @@ func (m *BudgetMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAmount(v)
+		return nil
+	case budget.FieldIsActive:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsActive(v)
 		return nil
 	case budget.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -1604,6 +1655,9 @@ func (m *BudgetMutation) ResetField(name string) error {
 		return nil
 	case budget.FieldAmount:
 		m.ResetAmount()
+		return nil
+	case budget.FieldIsActive:
+		m.ResetIsActive()
 		return nil
 	case budget.FieldCreatedAt:
 		m.ResetCreatedAt()

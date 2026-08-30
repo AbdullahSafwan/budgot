@@ -15,7 +15,7 @@ func NewCountryRepository(client *ent.Client) *CountryRepository {
 	return &CountryRepository{client: client}
 }
 
-// WithTx returns a copy of the repository bound to the given transaction, so its
+// WithTx binds the repository to an existing transaction.
 func (r *CountryRepository) WithTx(tx *ent.Tx) *CountryRepository {
 	return &CountryRepository{client: tx.Client()}
 }

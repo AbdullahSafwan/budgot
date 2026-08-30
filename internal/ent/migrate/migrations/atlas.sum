@@ -1,4 +1,4 @@
-h1:phI47E9MBdHzZ6ymSQDE8kDf4Aywb+rvAqxTXezBCeU=
+h1:XpaqOHyh6oYAeVCnHn6k5kBUmbXb6IMctfmAtevXG5c=
 20260803120651_create_users_sessions.sql h1:ruBWiqjfw4XdwUPTEGmxRQ94SBcXPmlOOzN4/cptnQ4=
 20260805134052_create_login_attempts.sql h1:NvnD28Cx6zK/+dteACpuWxUkaJVBEJDd4iDRDlkab1s=
 20260822145058_create_budgeting_tables.sql h1:NPTZ9KsNBk1jm726ZMjHYIP4xOeNhc2kOW8B6A2Cpzo=
@@ -7,3 +7,4 @@ h1:phI47E9MBdHzZ6ymSQDE8kDf4Aywb+rvAqxTXezBCeU=
 20260824160000_drop_transaction_type.sql h1:7qCOw/0O7NddH8hCbOPSsHuL8YL56qtYMmWTofWmabY=
 20260825070123_add_transaction_owner.sql h1:LcTsQ0eD3t006HlTE1t3/JJ8R99kzu+NkIynLKT47/0=
 20260830090530_replace_linked_transaction_with_transfer_group.sql h1:W/UuO1xdkNtalUHYa+sf/HETOpG6uf7aPEwiP5S/H0g=
+20260830134756_add_budget_is_active_and_partial_category_index.sql h1:4cNfS+wbgHSMr104FNqYkZqo94oYnrg8WOGKAeQ/8bo=

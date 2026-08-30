@@ -3,6 +3,7 @@
 package migrate
 
 import (
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/dialect/sql/schema"
 	"entgo.io/ent/schema/field"
 )
@@ -52,6 +53,7 @@ var (
 		{Name: "month", Type: field.TypeInt},
 		{Name: "year", Type: field.TypeInt},
 		{Name: "amount", Type: field.TypeInt64},
+		{Name: "is_active", Type: field.TypeBool, Default: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "category_id", Type: field.TypeInt},
@@ -67,25 +69,25 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "budgets_categories_budgets",
-				Columns:    []*schema.Column{BudgetsColumns[6]},
+				Columns:    []*schema.Column{BudgetsColumns[7]},
 				RefColumns: []*schema.Column{CategoriesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "budgets_countries_budgets",
-				Columns:    []*schema.Column{BudgetsColumns[7]},
+				Columns:    []*schema.Column{BudgetsColumns[8]},
 				RefColumns: []*schema.Column{CountriesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "budgets_currencies_budgets",
-				Columns:    []*schema.Column{BudgetsColumns[8]},
+				Columns:    []*schema.Column{BudgetsColumns[9]},
 				RefColumns: []*schema.Column{CurrenciesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "budgets_users_budgets",
-				Columns:    []*schema.Column{BudgetsColumns[9]},
+				Columns:    []*schema.Column{BudgetsColumns[10]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -94,7 +96,7 @@ var (
 			{
 				Name:    "budget_month_year_user_id_category_id_country_id_currency_id",
 				Unique:  true,
-				Columns: []*schema.Column{BudgetsColumns[1], BudgetsColumns[2], BudgetsColumns[9], BudgetsColumns[6], BudgetsColumns[7], BudgetsColumns[8]},
+				Columns: []*schema.Column{BudgetsColumns[1], BudgetsColumns[2], BudgetsColumns[10], BudgetsColumns[7], BudgetsColumns[8], BudgetsColumns[9]},
 			},
 		},
 	}
@@ -125,6 +127,9 @@ var (
 				Name:    "category_name_user_id",
 				Unique:  true,
 				Columns: []*schema.Column{CategoriesColumns[1], CategoriesColumns[5]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "is_active",
+				},
 			},
 		},
 	}
