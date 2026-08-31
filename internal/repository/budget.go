@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"budgot/internal/configs"
 	"budgot/internal/ent"
 	"budgot/internal/ent/budget"
 	"budgot/internal/ent/user"
@@ -32,7 +33,7 @@ type CreateBudgetParams struct {
 }
 
 func (r *BudgetRepository) Create(ctx context.Context, params CreateBudgetParams) (*ent.Budget, error) {
-	return r.client.Budget.Create().
+	b, err := r.client.Budget.Create().
 		SetOwnerID(params.OwnerID).
 		SetCategoryID(params.CategoryID).
 		SetCountryID(params.CountryID).
@@ -41,10 +42,12 @@ func (r *BudgetRepository) Create(ctx context.Context, params CreateBudgetParams
 		SetYear(params.Year).
 		SetAmount(params.Amount).
 		Save(ctx)
+	return b, configs.Translate(err)
 }
 
 func (r *BudgetRepository) FindByID(ctx context.Context, id int) (*ent.Budget, error) {
-	return r.client.Budget.Query().Where(budget.IDEQ(id)).Only(ctx)
+	b, err := r.client.Budget.Query().Where(budget.IDEQ(id)).Only(ctx)
+	return b, configs.Translate(err)
 }
 
 func (r *BudgetRepository) ListByOwner(ctx context.Context, ownerID int) ([]*ent.Budget, error) {
@@ -59,5 +62,5 @@ func (r *BudgetRepository) ListByOwner(ctx context.Context, ownerID int) ([]*ent
 // Delete soft-deletes a budget; rows are never hard-deleted.
 func (r *BudgetRepository) Delete(ctx context.Context, id int) error {
 	_, err := r.client.Budget.UpdateOneID(id).SetIsActive(false).Save(ctx)
-	return err
+	return configs.Translate(err)
 }

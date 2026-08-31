@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"budgot/internal/configs"
 	"budgot/internal/ent"
 	"budgot/internal/ent/currency"
 )
@@ -21,15 +22,17 @@ func (r *CurrencyRepository) WithTx(tx *ent.Tx) *CurrencyRepository {
 }
 
 func (r *CurrencyRepository) Create(ctx context.Context, code, name, symbol string) (*ent.Currency, error) {
-	return r.client.Currency.Create().
+	c, err := r.client.Currency.Create().
 		SetCode(code).
 		SetName(name).
 		SetSymbol(symbol).
 		Save(ctx)
+	return c, configs.Translate(err)
 }
 
 func (r *CurrencyRepository) FindByCode(ctx context.Context, code string) (*ent.Currency, error) {
-	return r.client.Currency.Query().Where(currency.CodeEQ(code)).Only(ctx)
+	c, err := r.client.Currency.Query().Where(currency.CodeEQ(code)).Only(ctx)
+	return c, configs.Translate(err)
 }
 
 func (r *CurrencyRepository) List(ctx context.Context) ([]*ent.Currency, error) {

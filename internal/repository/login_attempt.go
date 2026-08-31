@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"budgot/internal/configs"
 	"budgot/internal/ent"
 )
 
@@ -25,5 +26,5 @@ func (r *LoginAttemptRepository) Record(ctx context.Context, username, ipAddress
 		SetIPAddress(ipAddress).
 		SetSuccess(success).
 		Save(ctx)
-	return err
+	return configs.Translate(err)
 }

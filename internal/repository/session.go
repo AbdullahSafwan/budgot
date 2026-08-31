@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"budgot/internal/configs"
 	"budgot/internal/ent"
 	"budgot/internal/ent/session"
 )
@@ -31,7 +32,7 @@ type CreateSessionParams struct {
 }
 
 func (r *SessionRepository) Create(ctx context.Context, params CreateSessionParams) (*ent.Session, error) {
-	return r.client.Session.Create().
+	s, err := r.client.Session.Create().
 		SetID(params.ID).
 		SetOwnerID(params.OwnerID).
 		SetExpiresAt(params.ExpiresAt).
@@ -39,21 +40,23 @@ func (r *SessionRepository) Create(ctx context.Context, params CreateSessionPara
 		SetIPAddress(params.IPAddress).
 		SetUserAgentHash(params.UserAgentHash).
 		Save(ctx)
+	return s, configs.Translate(err)
 }
 
 func (r *SessionRepository) FindByID(ctx context.Context, id string) (*ent.Session, error) {
-	return r.client.Session.Query().
+	s, err := r.client.Session.Query().
 		Where(session.IDEQ(id)).
 		WithOwner().Only(ctx)
+	return s, configs.Translate(err)
 }
 
 func (r *SessionRepository) UpdateLastSeen(ctx context.Context, id string, t time.Time) error {
 	_, err := r.client.Session.UpdateOneID(id).SetLastSeen(t).Save(ctx)
-	return err
+	return configs.Translate(err)
 }
 
 func (r *SessionRepository) Delete(ctx context.Context, id string) error {
-	return r.client.Session.DeleteOneID(id).Exec(ctx)
+	return configs.Translate(r.client.Session.DeleteOneID(id).Exec(ctx))
 }
 
 // DeleteExpired hard-deletes sessions past their expiry (the one exception to soft-delete).

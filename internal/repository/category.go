@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"budgot/internal/configs"
 	"budgot/internal/ent"
 	"budgot/internal/ent/category"
 	"budgot/internal/ent/user"
@@ -29,16 +30,18 @@ type CreateCategoryParams struct {
 }
 
 func (r *CategoryRepository) Create(ctx context.Context, params CreateCategoryParams) (*ent.Category, error) {
-	return r.client.Category.Create().
+	c, err := r.client.Category.Create().
 		SetOwnerID(params.OwnerID).
 		SetName(params.Name).
 		SetType(params.Type).
 		SetColor(params.Color).
 		Save(ctx)
+	return c, configs.Translate(err)
 }
 
 func (r *CategoryRepository) FindByID(ctx context.Context, id int) (*ent.Category, error) {
-	return r.client.Category.Query().Where(category.IDEQ(id)).Only(ctx)
+	c, err := r.client.Category.Query().Where(category.IDEQ(id)).Only(ctx)
+	return c, configs.Translate(err)
 }
 
 func (r *CategoryRepository) ListByOwner(ctx context.Context, ownerID int) ([]*ent.Category, error) {
@@ -53,5 +56,5 @@ func (r *CategoryRepository) ListByOwner(ctx context.Context, ownerID int) ([]*e
 // Delete soft-deletes a category; the name becomes reusable once inactive.
 func (r *CategoryRepository) Delete(ctx context.Context, id int) error {
 	_, err := r.client.Category.UpdateOneID(id).SetIsActive(false).Save(ctx)
-	return err
+	return configs.Translate(err)
 }

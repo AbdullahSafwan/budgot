@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"budgot/internal/configs"
 	"budgot/internal/ent"
 	"budgot/internal/ent/country"
 )
@@ -21,14 +22,16 @@ func (r *CountryRepository) WithTx(tx *ent.Tx) *CountryRepository {
 }
 
 func (r *CountryRepository) Create(ctx context.Context, code, name string) (*ent.Country, error) {
-	return r.client.Country.Create().
+	c, err := r.client.Country.Create().
 		SetCode(code).
 		SetName(name).
 		Save(ctx)
+	return c, configs.Translate(err)
 }
 
 func (r *CountryRepository) FindByCode(ctx context.Context, code string) (*ent.Country, error) {
-	return r.client.Country.Query().Where(country.CodeEQ(code)).Only(ctx)
+	c, err := r.client.Country.Query().Where(country.CodeEQ(code)).Only(ctx)
+	return c, configs.Translate(err)
 }
 
 func (r *CountryRepository) List(ctx context.Context) ([]*ent.Country, error) {

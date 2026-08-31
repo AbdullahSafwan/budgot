@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"budgot/internal/configs"
 	"budgot/internal/ent"
 	"budgot/internal/ent/account"
 	"budgot/internal/ent/category"
@@ -46,11 +47,13 @@ func (r *TransactionRepository) Create(ctx context.Context, params CreateTransac
 	if params.TransferGroup != nil {
 		c = c.SetTransferGroup(*params.TransferGroup)
 	}
-	return c.Save(ctx)
+	t, err := c.Save(ctx)
+	return t, configs.Translate(err)
 }
 
 func (r *TransactionRepository) FindByID(ctx context.Context, id int) (*ent.Transaction, error) {
-	return r.client.Transaction.Query().Where(transaction.IDEQ(id)).Only(ctx)
+	t, err := r.client.Transaction.Query().Where(transaction.IDEQ(id)).Only(ctx)
+	return t, configs.Translate(err)
 }
 
 func (r *TransactionRepository) ListByAccount(ctx context.Context, accountID int) ([]*ent.Transaction, error) {
@@ -62,7 +65,7 @@ func (r *TransactionRepository) ListByAccount(ctx context.Context, accountID int
 // SetTransferGroup links a transaction to another as one leg of a transfer.
 func (r *TransactionRepository) SetTransferGroup(ctx context.Context, id int, group string) error {
 	_, err := r.client.Transaction.UpdateOneID(id).SetTransferGroup(group).Save(ctx)
-	return err
+	return configs.Translate(err)
 }
 
 func (r *TransactionRepository) ListByTransferGroup(ctx context.Context, group string) ([]*ent.Transaction, error) {
