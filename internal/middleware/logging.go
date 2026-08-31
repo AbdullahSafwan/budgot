@@ -21,6 +21,7 @@ func RequestLogger(next http.Handler) http.Handler {
 				"bytes", ww.BytesWritten(),
 				"duration_ms", time.Since(start).Milliseconds(),
 				"remote_ip", chimw.GetClientIP(r.Context()),
+				"request_id", chimw.GetReqID(r.Context()),
 			)
 		}()
 

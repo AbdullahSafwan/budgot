@@ -41,6 +41,7 @@ func NewRouter(db *ent.Client, cfg configs.Config) *chi.Mux {
 	r.NotFound(notFoundHandler)
 	r.MethodNotAllowed(methodNotAllowedHandler)
 
+	r.Use(chimw.RequestID)
 	// Trust XFF only when a proxy is configured; otherwise use the raw TCP peer.
 	if cfg.TrustedProxyHops > 0 {
 		r.Use(chimw.ClientIPFromXFFTrustedProxies(cfg.TrustedProxyHops))

@@ -7,7 +7,7 @@ env "local" {
 }
 
 env "prod" {
-  url = "sqlite://budgot.db?_fk=1"
+  url = getenv("DATABASE_URL")
   migration {
     dir = "file://internal/ent/migrate/migrations"
   }
