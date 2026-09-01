@@ -33,13 +33,6 @@ func requireEnv(key string) (string, error) {
 	return v, nil
 }
 
-func optionalEnv(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return fallback
-}
-
 func LoadConfig() (Config, error) {
 	csrfKey, err := requireEnv("CSRF_AUTH_KEY")
 	if err != nil {
@@ -66,7 +59,7 @@ func LoadConfig() (Config, error) {
 		AppEnv:      appEnv,
 		CSRFAuthKey: csrfKey,
 		LogLevel:    logLevel,
-		DatabaseDSN: optionalEnv("DATABASE_DSN", "file:budgot.db"),
+		DatabaseDSN: "file:budgot.db",
 
 		SessionTTL:           7 * 24 * time.Hour,
 		SessionIdleTimeout:   30 * time.Minute,
