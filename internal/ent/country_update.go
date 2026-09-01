@@ -6,6 +6,7 @@ import (
 	"budgot/internal/ent/account"
 	"budgot/internal/ent/budget"
 	"budgot/internal/ent/country"
+	"budgot/internal/ent/currency"
 	"budgot/internal/ent/predicate"
 	"context"
 	"errors"
@@ -87,6 +88,25 @@ func (_u *CountryUpdate) AddBudgets(v ...*Budget) *CountryUpdate {
 	return _u.AddBudgetIDs(ids...)
 }
 
+// SetDefaultCurrencyID sets the "default_currency" edge to the Currency entity by ID.
+func (_u *CountryUpdate) SetDefaultCurrencyID(id int) *CountryUpdate {
+	_u.mutation.SetDefaultCurrencyID(id)
+	return _u
+}
+
+// SetNillableDefaultCurrencyID sets the "default_currency" edge to the Currency entity by ID if the given value is not nil.
+func (_u *CountryUpdate) SetNillableDefaultCurrencyID(id *int) *CountryUpdate {
+	if id != nil {
+		_u = _u.SetDefaultCurrencyID(*id)
+	}
+	return _u
+}
+
+// SetDefaultCurrency sets the "default_currency" edge to the Currency entity.
+func (_u *CountryUpdate) SetDefaultCurrency(v *Currency) *CountryUpdate {
+	return _u.SetDefaultCurrencyID(v.ID)
+}
+
 // Mutation returns the CountryMutation object of the builder.
 func (_u *CountryUpdate) Mutation() *CountryMutation {
 	return _u.mutation
@@ -132,6 +152,12 @@ func (_u *CountryUpdate) RemoveBudgets(v ...*Budget) *CountryUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveBudgetIDs(ids...)
+}
+
+// ClearDefaultCurrency clears the "default_currency" edge to the Currency entity.
+func (_u *CountryUpdate) ClearDefaultCurrency() *CountryUpdate {
+	_u.mutation.ClearDefaultCurrency()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -284,6 +310,35 @@ func (_u *CountryUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.DefaultCurrencyCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   country.DefaultCurrencyTable,
+			Columns: []string{country.DefaultCurrencyColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(currency.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.DefaultCurrencyIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   country.DefaultCurrencyTable,
+			Columns: []string{country.DefaultCurrencyColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(currency.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{country.Label}
@@ -362,6 +417,25 @@ func (_u *CountryUpdateOne) AddBudgets(v ...*Budget) *CountryUpdateOne {
 	return _u.AddBudgetIDs(ids...)
 }
 
+// SetDefaultCurrencyID sets the "default_currency" edge to the Currency entity by ID.
+func (_u *CountryUpdateOne) SetDefaultCurrencyID(id int) *CountryUpdateOne {
+	_u.mutation.SetDefaultCurrencyID(id)
+	return _u
+}
+
+// SetNillableDefaultCurrencyID sets the "default_currency" edge to the Currency entity by ID if the given value is not nil.
+func (_u *CountryUpdateOne) SetNillableDefaultCurrencyID(id *int) *CountryUpdateOne {
+	if id != nil {
+		_u = _u.SetDefaultCurrencyID(*id)
+	}
+	return _u
+}
+
+// SetDefaultCurrency sets the "default_currency" edge to the Currency entity.
+func (_u *CountryUpdateOne) SetDefaultCurrency(v *Currency) *CountryUpdateOne {
+	return _u.SetDefaultCurrencyID(v.ID)
+}
+
 // Mutation returns the CountryMutation object of the builder.
 func (_u *CountryUpdateOne) Mutation() *CountryMutation {
 	return _u.mutation
@@ -407,6 +481,12 @@ func (_u *CountryUpdateOne) RemoveBudgets(v ...*Budget) *CountryUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveBudgetIDs(ids...)
+}
+
+// ClearDefaultCurrency clears the "default_currency" edge to the Currency entity.
+func (_u *CountryUpdateOne) ClearDefaultCurrency() *CountryUpdateOne {
+	_u.mutation.ClearDefaultCurrency()
+	return _u
 }
 
 // Where appends a list predicates to the CountryUpdate builder.
@@ -582,6 +662,35 @@ func (_u *CountryUpdateOne) sqlSave(ctx context.Context) (_node *Country, err er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(budget.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.DefaultCurrencyCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   country.DefaultCurrencyTable,
+			Columns: []string{country.DefaultCurrencyColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(currency.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.DefaultCurrencyIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   country.DefaultCurrencyTable,
+			Columns: []string{country.DefaultCurrencyColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(currency.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

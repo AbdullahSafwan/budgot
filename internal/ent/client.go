@@ -987,6 +987,22 @@ func (c *CountryClient) QueryBudgets(_m *Country) *BudgetQuery {
 	return query
 }
 
+// QueryDefaultCurrency queries the default_currency edge of a Country.
+func (c *CountryClient) QueryDefaultCurrency(_m *Country) *CurrencyQuery {
+	query := (&CurrencyClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(country.Table, country.FieldID, id),
+			sqlgraph.To(currency.Table, currency.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, country.DefaultCurrencyTable, country.DefaultCurrencyColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *CountryClient) Hooks() []Hook {
 	return c.hooks.Country

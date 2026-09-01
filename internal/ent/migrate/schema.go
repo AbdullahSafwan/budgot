@@ -138,12 +138,21 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "code", Type: field.TypeString, Unique: true},
 		{Name: "name", Type: field.TypeString},
+		{Name: "default_currency_id", Type: field.TypeInt, Nullable: true},
 	}
 	// CountriesTable holds the schema information for the "countries" table.
 	CountriesTable = &schema.Table{
 		Name:       "countries",
 		Columns:    CountriesColumns,
 		PrimaryKey: []*schema.Column{CountriesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "countries_currencies_default_currency",
+				Columns:    []*schema.Column{CountriesColumns[3]},
+				RefColumns: []*schema.Column{CurrenciesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// CurrenciesColumns holds the columns for the "currencies" table.
 	CurrenciesColumns = []*schema.Column{
@@ -296,6 +305,7 @@ func init() {
 	BudgetsTable.ForeignKeys[2].RefTable = CurrenciesTable
 	BudgetsTable.ForeignKeys[3].RefTable = UsersTable
 	CategoriesTable.ForeignKeys[0].RefTable = UsersTable
+	CountriesTable.ForeignKeys[0].RefTable = CurrenciesTable
 	SessionsTable.ForeignKeys[0].RefTable = UsersTable
 	TransactionsTable.ForeignKeys[0].RefTable = AccountsTable
 	TransactionsTable.ForeignKeys[1].RefTable = CategoriesTable

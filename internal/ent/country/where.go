@@ -240,6 +240,29 @@ func HasBudgetsWith(preds ...predicate.Budget) predicate.Country {
 	})
 }
 
+// HasDefaultCurrency applies the HasEdge predicate on the "default_currency" edge.
+func HasDefaultCurrency() predicate.Country {
+	return predicate.Country(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, DefaultCurrencyTable, DefaultCurrencyColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasDefaultCurrencyWith applies the HasEdge predicate on the "default_currency" edge with a given conditions (other predicates).
+func HasDefaultCurrencyWith(preds ...predicate.Currency) predicate.Country {
+	return predicate.Country(func(s *sql.Selector) {
+		step := newDefaultCurrencyStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Country) predicate.Country {
 	return predicate.Country(sql.AndPredicates(predicates...))
