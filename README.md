@@ -18,6 +18,8 @@ Currencies are **siloed** — no FX conversion, no cross-currency netting. An ac
 
 A transaction's `amount` is **signed**, independent of its category: negative means money left the account, positive means it arrived. A transfer between two accounts is just two transactions — one leg per account, opposite signs, linked by a shared `transfer_group` — rather than full double-entry bookkeeping.
 
+Money is always a raw minor-unit integer (e.g. cents) end to end through the backend — never a decimal string. A currency's `decimal_places` is stored purely as metadata for the frontend; decimal↔integer conversion happens there, not in Go.
+
 ## Setup
 
 Requires a `.env` file at the repo root with:
