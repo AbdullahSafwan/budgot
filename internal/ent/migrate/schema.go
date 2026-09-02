@@ -216,6 +216,7 @@ var (
 		{Name: "transfer_group", Type: field.TypeString, Nullable: true},
 		{Name: "account_id", Type: field.TypeInt},
 		{Name: "category_id", Type: field.TypeInt},
+		{Name: "country_id", Type: field.TypeInt},
 		{Name: "user_id", Type: field.TypeInt},
 	}
 	// TransactionsTable holds the schema information for the "transactions" table.
@@ -237,8 +238,14 @@ var (
 				OnDelete:   schema.NoAction,
 			},
 			{
-				Symbol:     "transactions_users_transactions",
+				Symbol:     "transactions_countries_transactions",
 				Columns:    []*schema.Column{TransactionsColumns[8]},
+				RefColumns: []*schema.Column{CountriesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "transactions_users_transactions",
+				Columns:    []*schema.Column{TransactionsColumns[9]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -247,7 +254,7 @@ var (
 			{
 				Name:    "transaction_user_id",
 				Unique:  false,
-				Columns: []*schema.Column{TransactionsColumns[8]},
+				Columns: []*schema.Column{TransactionsColumns[9]},
 			},
 			{
 				Name:    "transaction_account_id",
@@ -263,6 +270,11 @@ var (
 				Name:    "transaction_transfer_group",
 				Unique:  false,
 				Columns: []*schema.Column{TransactionsColumns[5]},
+			},
+			{
+				Name:    "transaction_user_id_country_id",
+				Unique:  false,
+				Columns: []*schema.Column{TransactionsColumns[9], TransactionsColumns[8]},
 			},
 		},
 	}
@@ -309,5 +321,6 @@ func init() {
 	SessionsTable.ForeignKeys[0].RefTable = UsersTable
 	TransactionsTable.ForeignKeys[0].RefTable = AccountsTable
 	TransactionsTable.ForeignKeys[1].RefTable = CategoriesTable
-	TransactionsTable.ForeignKeys[2].RefTable = UsersTable
+	TransactionsTable.ForeignKeys[2].RefTable = CountriesTable
+	TransactionsTable.ForeignKeys[3].RefTable = UsersTable
 }

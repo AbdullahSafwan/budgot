@@ -6,6 +6,7 @@ import (
 	"budgot/internal/configs"
 	"budgot/internal/ent"
 	"budgot/internal/ent/budget"
+	"budgot/internal/ent/country"
 	"budgot/internal/ent/user"
 )
 
@@ -50,10 +51,12 @@ func (r *BudgetRepository) FindByID(ctx context.Context, id int) (*ent.Budget, e
 	return b, configs.Translate(err)
 }
 
-func (r *BudgetRepository) ListByOwner(ctx context.Context, ownerID int) ([]*ent.Budget, error) {
+// list function for filtering budgets by owner and country
+func (r *BudgetRepository) ListByOwnerAndCountry(ctx context.Context, ownerID, countryID int) ([]*ent.Budget, error) {
 	return r.client.Budget.Query().
 		Where(
 			budget.HasOwnerWith(user.IDEQ(ownerID)),
+			budget.HasCountryWith(country.IDEQ(countryID)),
 			budget.IsActiveEQ(true),
 		).
 		All(ctx)

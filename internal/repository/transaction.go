@@ -11,6 +11,7 @@ import (
 	"budgot/internal/ent/country"
 	"budgot/internal/ent/currency"
 	"budgot/internal/ent/transaction"
+	"budgot/internal/ent/user"
 )
 
 type TransactionRepository struct {
@@ -30,6 +31,7 @@ type CreateTransactionParams struct {
 	OwnerID         int
 	AccountID       int
 	CategoryID      int
+	CountryID       int
 	Amount          int64
 	Description     string
 	TransactionDate time.Time
@@ -41,6 +43,7 @@ func (r *TransactionRepository) Create(ctx context.Context, params CreateTransac
 		SetOwnerID(params.OwnerID).
 		SetAccountID(params.AccountID).
 		SetCategoryID(params.CategoryID).
+		SetCountryID(params.CountryID).
 		SetAmount(params.Amount).
 		SetDescription(params.Description).
 		SetTransactionDate(params.TransactionDate)
@@ -59,6 +62,15 @@ func (r *TransactionRepository) FindByID(ctx context.Context, id int) (*ent.Tran
 func (r *TransactionRepository) ListByAccount(ctx context.Context, accountID int) ([]*ent.Transaction, error) {
 	return r.client.Transaction.Query().
 		Where(transaction.HasAccountWith(account.IDEQ(accountID))).
+		All(ctx)
+}
+
+func (r *TransactionRepository) ListByOwnerAndCountry(ctx context.Context, ownerID, countryID int) ([]*ent.Transaction, error) {
+	return r.client.Transaction.Query().
+		Where(
+			transaction.HasOwnerWith(user.IDEQ(ownerID)),
+			transaction.HasCountryWith(country.IDEQ(countryID)),
+		).
 		All(ctx)
 }
 
@@ -102,10 +114,8 @@ func (r *TransactionRepository) SumByCategoryAndPeriod(ctx context.Context, cate
 	err := r.client.Transaction.Query().
 		Where(
 			transaction.HasCategoryWith(category.IDEQ(categoryID)),
-			transaction.HasAccountWith(
-				account.HasCountryWith(country.IDEQ(countryID)),
-				account.HasCurrencyWith(currency.IDEQ(currencyID)),
-			),
+			transaction.HasCountryWith(country.IDEQ(countryID)),
+			transaction.HasAccountWith(account.HasCurrencyWith(currency.IDEQ(currencyID))),
 			transaction.TransactionDateGTE(start),
 			transaction.TransactionDateLT(end),
 		).

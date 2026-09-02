@@ -5,6 +5,7 @@ package ent
 import (
 	"budgot/internal/ent/account"
 	"budgot/internal/ent/category"
+	"budgot/internal/ent/country"
 	"budgot/internal/ent/predicate"
 	"budgot/internal/ent/transaction"
 	"budgot/internal/ent/user"
@@ -28,6 +29,7 @@ type TransactionQuery struct {
 	withOwner    *UserQuery
 	withAccount  *AccountQuery
 	withCategory *CategoryQuery
+	withCountry  *CountryQuery
 	withFKs      bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -124,6 +126,28 @@ func (_q *TransactionQuery) QueryCategory() *CategoryQuery {
 			sqlgraph.From(transaction.Table, transaction.FieldID, selector),
 			sqlgraph.To(category.Table, category.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, transaction.CategoryTable, transaction.CategoryColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryCountry chains the current query on the "country" edge.
+func (_q *TransactionQuery) QueryCountry() *CountryQuery {
+	query := (&CountryClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(transaction.Table, transaction.FieldID, selector),
+			sqlgraph.To(country.Table, country.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, transaction.CountryTable, transaction.CountryColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -326,6 +350,7 @@ func (_q *TransactionQuery) Clone() *TransactionQuery {
 		withOwner:    _q.withOwner.Clone(),
 		withAccount:  _q.withAccount.Clone(),
 		withCategory: _q.withCategory.Clone(),
+		withCountry:  _q.withCountry.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -362,6 +387,17 @@ func (_q *TransactionQuery) WithCategory(opts ...func(*CategoryQuery)) *Transact
 		opt(query)
 	}
 	_q.withCategory = query
+	return _q
+}
+
+// WithCountry tells the query-builder to eager-load the nodes that are connected to
+// the "country" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *TransactionQuery) WithCountry(opts ...func(*CountryQuery)) *TransactionQuery {
+	query := (&CountryClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withCountry = query
 	return _q
 }
 
@@ -444,13 +480,14 @@ func (_q *TransactionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 		nodes       = []*Transaction{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			_q.withOwner != nil,
 			_q.withAccount != nil,
 			_q.withCategory != nil,
+			_q.withCountry != nil,
 		}
 	)
-	if _q.withOwner != nil || _q.withAccount != nil || _q.withCategory != nil {
+	if _q.withOwner != nil || _q.withAccount != nil || _q.withCategory != nil || _q.withCountry != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -489,6 +526,12 @@ func (_q *TransactionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	if query := _q.withCategory; query != nil {
 		if err := _q.loadCategory(ctx, query, nodes, nil,
 			func(n *Transaction, e *Category) { n.Edges.Category = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withCountry; query != nil {
+		if err := _q.loadCountry(ctx, query, nodes, nil,
+			func(n *Transaction, e *Country) { n.Edges.Country = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -584,6 +627,38 @@ func (_q *TransactionQuery) loadCategory(ctx context.Context, query *CategoryQue
 		nodes, ok := nodeids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "category_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (_q *TransactionQuery) loadCountry(ctx context.Context, query *CountryQuery, nodes []*Transaction, init func(*Transaction), assign func(*Transaction, *Country)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Transaction)
+	for i := range nodes {
+		if nodes[i].country_id == nil {
+			continue
+		}
+		fk := *nodes[i].country_id
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(country.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "country_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)

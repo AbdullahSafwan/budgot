@@ -5,6 +5,7 @@ package ent
 import (
 	"budgot/internal/ent/account"
 	"budgot/internal/ent/category"
+	"budgot/internal/ent/country"
 	"budgot/internal/ent/transaction"
 	"budgot/internal/ent/user"
 	"fmt"
@@ -35,6 +36,7 @@ type Transaction struct {
 	Edges        TransactionEdges `json:"edges"`
 	account_id   *int
 	category_id  *int
+	country_id   *int
 	user_id      *int
 	selectValues sql.SelectValues
 }
@@ -47,9 +49,11 @@ type TransactionEdges struct {
 	Account *Account `json:"account,omitempty"`
 	// Category holds the value of the category edge.
 	Category *Category `json:"category,omitempty"`
+	// Country holds the value of the country edge.
+	Country *Country `json:"country,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // OwnerOrErr returns the Owner value or an error if the edge
@@ -85,6 +89,17 @@ func (e TransactionEdges) CategoryOrErr() (*Category, error) {
 	return nil, &NotLoadedError{edge: "category"}
 }
 
+// CountryOrErr returns the Country value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e TransactionEdges) CountryOrErr() (*Country, error) {
+	if e.Country != nil {
+		return e.Country, nil
+	} else if e.loadedTypes[3] {
+		return nil, &NotFoundError{label: country.Label}
+	}
+	return nil, &NotLoadedError{edge: "country"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Transaction) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -100,7 +115,9 @@ func (*Transaction) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case transaction.ForeignKeys[1]: // category_id
 			values[i] = new(sql.NullInt64)
-		case transaction.ForeignKeys[2]: // user_id
+		case transaction.ForeignKeys[2]: // country_id
+			values[i] = new(sql.NullInt64)
+		case transaction.ForeignKeys[3]: // user_id
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -169,6 +186,13 @@ func (_m *Transaction) assignValues(columns []string, values []any) error {
 			}
 		case transaction.ForeignKeys[2]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field country_id", value)
+			} else if value.Valid {
+				_m.country_id = new(int)
+				*_m.country_id = int(value.Int64)
+			}
+		case transaction.ForeignKeys[3]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field user_id", value)
 			} else if value.Valid {
 				_m.user_id = new(int)
@@ -200,6 +224,11 @@ func (_m *Transaction) QueryAccount() *AccountQuery {
 // QueryCategory queries the "category" edge of the Transaction entity.
 func (_m *Transaction) QueryCategory() *CategoryQuery {
 	return NewTransactionClient(_m.config).QueryCategory(_m)
+}
+
+// QueryCountry queries the "country" edge of the Transaction entity.
+func (_m *Transaction) QueryCountry() *CountryQuery {
+	return NewTransactionClient(_m.config).QueryCountry(_m)
 }
 
 // Update returns a builder for updating this Transaction.

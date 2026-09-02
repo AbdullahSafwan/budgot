@@ -20,6 +20,8 @@ const (
 	EdgeAccounts = "accounts"
 	// EdgeBudgets holds the string denoting the budgets edge name in mutations.
 	EdgeBudgets = "budgets"
+	// EdgeTransactions holds the string denoting the transactions edge name in mutations.
+	EdgeTransactions = "transactions"
 	// EdgeDefaultCurrency holds the string denoting the default_currency edge name in mutations.
 	EdgeDefaultCurrency = "default_currency"
 	// Table holds the table name of the country in the database.
@@ -38,6 +40,13 @@ const (
 	BudgetsInverseTable = "budgets"
 	// BudgetsColumn is the table column denoting the budgets relation/edge.
 	BudgetsColumn = "country_id"
+	// TransactionsTable is the table that holds the transactions relation/edge.
+	TransactionsTable = "transactions"
+	// TransactionsInverseTable is the table name for the Transaction entity.
+	// It exists in this package in order to avoid circular dependency with the "transaction" package.
+	TransactionsInverseTable = "transactions"
+	// TransactionsColumn is the table column denoting the transactions relation/edge.
+	TransactionsColumn = "country_id"
 	// DefaultCurrencyTable is the table that holds the default_currency relation/edge.
 	DefaultCurrencyTable = "countries"
 	// DefaultCurrencyInverseTable is the table name for the Currency entity.
@@ -128,6 +137,20 @@ func ByBudgets(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByTransactionsCount orders the results by transactions count.
+func ByTransactionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newTransactionsStep(), opts...)
+	}
+}
+
+// ByTransactions orders the results by transactions terms.
+func ByTransactions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTransactionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByDefaultCurrencyField orders the results by default_currency field.
 func ByDefaultCurrencyField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -146,6 +169,13 @@ func newBudgetsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(BudgetsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, BudgetsTable, BudgetsColumn),
+	)
+}
+func newTransactionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TransactionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, TransactionsTable, TransactionsColumn),
 	)
 }
 func newDefaultCurrencyStep() *sqlgraph.Step {

@@ -987,6 +987,22 @@ func (c *CountryClient) QueryBudgets(_m *Country) *BudgetQuery {
 	return query
 }
 
+// QueryTransactions queries the transactions edge of a Country.
+func (c *CountryClient) QueryTransactions(_m *Country) *TransactionQuery {
+	query := (&TransactionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(country.Table, country.FieldID, id),
+			sqlgraph.To(transaction.Table, transaction.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, country.TransactionsTable, country.TransactionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryDefaultCurrency queries the default_currency edge of a Country.
 func (c *CountryClient) QueryDefaultCurrency(_m *Country) *CurrencyQuery {
 	query := (&CurrencyClient{config: c.config}).Query()
@@ -1624,6 +1640,22 @@ func (c *TransactionClient) QueryCategory(_m *Transaction) *CategoryQuery {
 			sqlgraph.From(transaction.Table, transaction.FieldID, id),
 			sqlgraph.To(category.Table, category.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, transaction.CategoryTable, transaction.CategoryColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryCountry queries the country edge of a Transaction.
+func (c *TransactionClient) QueryCountry(_m *Transaction) *CountryQuery {
+	query := (&CountryClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(transaction.Table, transaction.FieldID, id),
+			sqlgraph.To(country.Table, country.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, transaction.CountryTable, transaction.CountryColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil

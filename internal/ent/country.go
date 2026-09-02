@@ -34,11 +34,13 @@ type CountryEdges struct {
 	Accounts []*Account `json:"accounts,omitempty"`
 	// Budgets holds the value of the budgets edge.
 	Budgets []*Budget `json:"budgets,omitempty"`
+	// Transactions holds the value of the transactions edge.
+	Transactions []*Transaction `json:"transactions,omitempty"`
 	// DefaultCurrency holds the value of the default_currency edge.
 	DefaultCurrency *Currency `json:"default_currency,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // AccountsOrErr returns the Accounts value or an error if the edge
@@ -59,12 +61,21 @@ func (e CountryEdges) BudgetsOrErr() ([]*Budget, error) {
 	return nil, &NotLoadedError{edge: "budgets"}
 }
 
+// TransactionsOrErr returns the Transactions value or an error if the edge
+// was not loaded in eager-loading.
+func (e CountryEdges) TransactionsOrErr() ([]*Transaction, error) {
+	if e.loadedTypes[2] {
+		return e.Transactions, nil
+	}
+	return nil, &NotLoadedError{edge: "transactions"}
+}
+
 // DefaultCurrencyOrErr returns the DefaultCurrency value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e CountryEdges) DefaultCurrencyOrErr() (*Currency, error) {
 	if e.DefaultCurrency != nil {
 		return e.DefaultCurrency, nil
-	} else if e.loadedTypes[2] {
+	} else if e.loadedTypes[3] {
 		return nil, &NotFoundError{label: currency.Label}
 	}
 	return nil, &NotLoadedError{edge: "default_currency"}
@@ -142,6 +153,11 @@ func (_m *Country) QueryAccounts() *AccountQuery {
 // QueryBudgets queries the "budgets" edge of the Country entity.
 func (_m *Country) QueryBudgets() *BudgetQuery {
 	return NewCountryClient(_m.config).QueryBudgets(_m)
+}
+
+// QueryTransactions queries the "transactions" edge of the Country entity.
+func (_m *Country) QueryTransactions() *TransactionQuery {
+	return NewCountryClient(_m.config).QueryTransactions(_m)
 }
 
 // QueryDefaultCurrency queries the "default_currency" edge of the Country entity.

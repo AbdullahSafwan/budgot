@@ -5,6 +5,7 @@ package ent
 import (
 	"budgot/internal/ent/account"
 	"budgot/internal/ent/category"
+	"budgot/internal/ent/country"
 	"budgot/internal/ent/transaction"
 	"budgot/internal/ent/user"
 	"context"
@@ -110,6 +111,17 @@ func (_c *TransactionCreate) SetCategory(v *Category) *TransactionCreate {
 	return _c.SetCategoryID(v.ID)
 }
 
+// SetCountryID sets the "country" edge to the Country entity by ID.
+func (_c *TransactionCreate) SetCountryID(id int) *TransactionCreate {
+	_c.mutation.SetCountryID(id)
+	return _c
+}
+
+// SetCountry sets the "country" edge to the Country entity.
+func (_c *TransactionCreate) SetCountry(v *Country) *TransactionCreate {
+	return _c.SetCountryID(v.ID)
+}
+
 // Mutation returns the TransactionMutation object of the builder.
 func (_c *TransactionCreate) Mutation() *TransactionMutation {
 	return _c.mutation
@@ -170,6 +182,9 @@ func (_c *TransactionCreate) check() error {
 	}
 	if len(_c.mutation.CategoryIDs()) == 0 {
 		return &ValidationError{Name: "category", err: errors.New(`ent: missing required edge "Transaction.category"`)}
+	}
+	if len(_c.mutation.CountryIDs()) == 0 {
+		return &ValidationError{Name: "country", err: errors.New(`ent: missing required edge "Transaction.country"`)}
 	}
 	return nil
 }
@@ -266,6 +281,23 @@ func (_c *TransactionCreate) createSpec() (*Transaction, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.category_id = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.CountryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   transaction.CountryTable,
+			Columns: []string{transaction.CountryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(country.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.country_id = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

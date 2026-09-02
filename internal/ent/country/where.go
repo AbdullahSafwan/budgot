@@ -240,6 +240,29 @@ func HasBudgetsWith(preds ...predicate.Budget) predicate.Country {
 	})
 }
 
+// HasTransactions applies the HasEdge predicate on the "transactions" edge.
+func HasTransactions() predicate.Country {
+	return predicate.Country(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, TransactionsTable, TransactionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTransactionsWith applies the HasEdge predicate on the "transactions" edge with a given conditions (other predicates).
+func HasTransactionsWith(preds ...predicate.Transaction) predicate.Country {
+	return predicate.Country(func(s *sql.Selector) {
+		step := newTransactionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasDefaultCurrency applies the HasEdge predicate on the "default_currency" edge.
 func HasDefaultCurrency() predicate.Country {
 	return predicate.Country(func(s *sql.Selector) {

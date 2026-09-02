@@ -2535,6 +2535,9 @@ type CountryMutation struct {
 	budgets                 map[int]struct{}
 	removedbudgets          map[int]struct{}
 	clearedbudgets          bool
+	transactions            map[int]struct{}
+	removedtransactions     map[int]struct{}
+	clearedtransactions     bool
 	default_currency        *int
 	cleareddefault_currency bool
 	done                    bool
@@ -2820,6 +2823,60 @@ func (m *CountryMutation) ResetBudgets() {
 	m.removedbudgets = nil
 }
 
+// AddTransactionIDs adds the "transactions" edge to the Transaction entity by ids.
+func (m *CountryMutation) AddTransactionIDs(ids ...int) {
+	if m.transactions == nil {
+		m.transactions = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.transactions[ids[i]] = struct{}{}
+	}
+}
+
+// ClearTransactions clears the "transactions" edge to the Transaction entity.
+func (m *CountryMutation) ClearTransactions() {
+	m.clearedtransactions = true
+}
+
+// TransactionsCleared reports if the "transactions" edge to the Transaction entity was cleared.
+func (m *CountryMutation) TransactionsCleared() bool {
+	return m.clearedtransactions
+}
+
+// RemoveTransactionIDs removes the "transactions" edge to the Transaction entity by IDs.
+func (m *CountryMutation) RemoveTransactionIDs(ids ...int) {
+	if m.removedtransactions == nil {
+		m.removedtransactions = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.transactions, ids[i])
+		m.removedtransactions[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedTransactions returns the removed IDs of the "transactions" edge to the Transaction entity.
+func (m *CountryMutation) RemovedTransactionsIDs() (ids []int) {
+	for id := range m.removedtransactions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// TransactionsIDs returns the "transactions" edge IDs in the mutation.
+func (m *CountryMutation) TransactionsIDs() (ids []int) {
+	for id := range m.transactions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetTransactions resets all changes to the "transactions" edge.
+func (m *CountryMutation) ResetTransactions() {
+	m.transactions = nil
+	m.clearedtransactions = false
+	m.removedtransactions = nil
+}
+
 // SetDefaultCurrencyID sets the "default_currency" edge to the Currency entity by id.
 func (m *CountryMutation) SetDefaultCurrencyID(id int) {
 	m.default_currency = &id
@@ -3009,12 +3066,15 @@ func (m *CountryMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *CountryMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.accounts != nil {
 		edges = append(edges, country.EdgeAccounts)
 	}
 	if m.budgets != nil {
 		edges = append(edges, country.EdgeBudgets)
+	}
+	if m.transactions != nil {
+		edges = append(edges, country.EdgeTransactions)
 	}
 	if m.default_currency != nil {
 		edges = append(edges, country.EdgeDefaultCurrency)
@@ -3038,6 +3098,12 @@ func (m *CountryMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case country.EdgeTransactions:
+		ids := make([]ent.Value, 0, len(m.transactions))
+		for id := range m.transactions {
+			ids = append(ids, id)
+		}
+		return ids
 	case country.EdgeDefaultCurrency:
 		if id := m.default_currency; id != nil {
 			return []ent.Value{*id}
@@ -3048,12 +3114,15 @@ func (m *CountryMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *CountryMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.removedaccounts != nil {
 		edges = append(edges, country.EdgeAccounts)
 	}
 	if m.removedbudgets != nil {
 		edges = append(edges, country.EdgeBudgets)
+	}
+	if m.removedtransactions != nil {
+		edges = append(edges, country.EdgeTransactions)
 	}
 	return edges
 }
@@ -3074,18 +3143,27 @@ func (m *CountryMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case country.EdgeTransactions:
+		ids := make([]ent.Value, 0, len(m.removedtransactions))
+		for id := range m.removedtransactions {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *CountryMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.clearedaccounts {
 		edges = append(edges, country.EdgeAccounts)
 	}
 	if m.clearedbudgets {
 		edges = append(edges, country.EdgeBudgets)
+	}
+	if m.clearedtransactions {
+		edges = append(edges, country.EdgeTransactions)
 	}
 	if m.cleareddefault_currency {
 		edges = append(edges, country.EdgeDefaultCurrency)
@@ -3101,6 +3179,8 @@ func (m *CountryMutation) EdgeCleared(name string) bool {
 		return m.clearedaccounts
 	case country.EdgeBudgets:
 		return m.clearedbudgets
+	case country.EdgeTransactions:
+		return m.clearedtransactions
 	case country.EdgeDefaultCurrency:
 		return m.cleareddefault_currency
 	}
@@ -3127,6 +3207,9 @@ func (m *CountryMutation) ResetEdge(name string) error {
 		return nil
 	case country.EdgeBudgets:
 		m.ResetBudgets()
+		return nil
+	case country.EdgeTransactions:
+		m.ResetTransactions()
 		return nil
 	case country.EdgeDefaultCurrency:
 		m.ResetDefaultCurrency()
@@ -5001,6 +5084,8 @@ type TransactionMutation struct {
 	clearedaccount   bool
 	category         *int
 	clearedcategory  bool
+	country          *int
+	clearedcountry   bool
 	done             bool
 	oldValue         func(context.Context) (*Transaction, error)
 	predicates       []predicate.Transaction
@@ -5447,6 +5532,45 @@ func (m *TransactionMutation) ResetCategory() {
 	m.clearedcategory = false
 }
 
+// SetCountryID sets the "country" edge to the Country entity by id.
+func (m *TransactionMutation) SetCountryID(id int) {
+	m.country = &id
+}
+
+// ClearCountry clears the "country" edge to the Country entity.
+func (m *TransactionMutation) ClearCountry() {
+	m.clearedcountry = true
+}
+
+// CountryCleared reports if the "country" edge to the Country entity was cleared.
+func (m *TransactionMutation) CountryCleared() bool {
+	return m.clearedcountry
+}
+
+// CountryID returns the "country" edge ID in the mutation.
+func (m *TransactionMutation) CountryID() (id int, exists bool) {
+	if m.country != nil {
+		return *m.country, true
+	}
+	return
+}
+
+// CountryIDs returns the "country" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// CountryID instead. It exists only for internal usage by the builders.
+func (m *TransactionMutation) CountryIDs() (ids []int) {
+	if id := m.country; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetCountry resets all changes to the "country" edge.
+func (m *TransactionMutation) ResetCountry() {
+	m.country = nil
+	m.clearedcountry = false
+}
+
 // Where appends a list predicates to the TransactionMutation builder.
 func (m *TransactionMutation) Where(ps ...predicate.Transaction) {
 	m.predicates = append(m.predicates, ps...)
@@ -5678,7 +5802,7 @@ func (m *TransactionMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *TransactionMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.owner != nil {
 		edges = append(edges, transaction.EdgeOwner)
 	}
@@ -5687,6 +5811,9 @@ func (m *TransactionMutation) AddedEdges() []string {
 	}
 	if m.category != nil {
 		edges = append(edges, transaction.EdgeCategory)
+	}
+	if m.country != nil {
+		edges = append(edges, transaction.EdgeCountry)
 	}
 	return edges
 }
@@ -5707,13 +5834,17 @@ func (m *TransactionMutation) AddedIDs(name string) []ent.Value {
 		if id := m.category; id != nil {
 			return []ent.Value{*id}
 		}
+	case transaction.EdgeCountry:
+		if id := m.country; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *TransactionMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	return edges
 }
 
@@ -5725,7 +5856,7 @@ func (m *TransactionMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *TransactionMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.clearedowner {
 		edges = append(edges, transaction.EdgeOwner)
 	}
@@ -5734,6 +5865,9 @@ func (m *TransactionMutation) ClearedEdges() []string {
 	}
 	if m.clearedcategory {
 		edges = append(edges, transaction.EdgeCategory)
+	}
+	if m.clearedcountry {
+		edges = append(edges, transaction.EdgeCountry)
 	}
 	return edges
 }
@@ -5748,6 +5882,8 @@ func (m *TransactionMutation) EdgeCleared(name string) bool {
 		return m.clearedaccount
 	case transaction.EdgeCategory:
 		return m.clearedcategory
+	case transaction.EdgeCountry:
+		return m.clearedcountry
 	}
 	return false
 }
@@ -5765,6 +5901,9 @@ func (m *TransactionMutation) ClearEdge(name string) error {
 	case transaction.EdgeCategory:
 		m.ClearCategory()
 		return nil
+	case transaction.EdgeCountry:
+		m.ClearCountry()
+		return nil
 	}
 	return fmt.Errorf("unknown Transaction unique edge %s", name)
 }
@@ -5781,6 +5920,9 @@ func (m *TransactionMutation) ResetEdge(name string) error {
 		return nil
 	case transaction.EdgeCategory:
 		m.ResetCategory()
+		return nil
+	case transaction.EdgeCountry:
+		m.ResetCountry()
 		return nil
 	}
 	return fmt.Errorf("unknown Transaction edge %s", name)

@@ -7,6 +7,7 @@ import (
 	"budgot/internal/ent/budget"
 	"budgot/internal/ent/country"
 	"budgot/internal/ent/currency"
+	"budgot/internal/ent/transaction"
 	"context"
 	"errors"
 	"fmt"
@@ -62,6 +63,21 @@ func (_c *CountryCreate) AddBudgets(v ...*Budget) *CountryCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddBudgetIDs(ids...)
+}
+
+// AddTransactionIDs adds the "transactions" edge to the Transaction entity by IDs.
+func (_c *CountryCreate) AddTransactionIDs(ids ...int) *CountryCreate {
+	_c.mutation.AddTransactionIDs(ids...)
+	return _c
+}
+
+// AddTransactions adds the "transactions" edges to the Transaction entity.
+func (_c *CountryCreate) AddTransactions(v ...*Transaction) *CountryCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddTransactionIDs(ids...)
 }
 
 // SetDefaultCurrencyID sets the "default_currency" edge to the Currency entity by ID.
@@ -192,6 +208,22 @@ func (_c *CountryCreate) createSpec() (*Country, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(budget.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.TransactionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   country.TransactionsTable,
+			Columns: []string{country.TransactionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(transaction.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

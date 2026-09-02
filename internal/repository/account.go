@@ -6,6 +6,7 @@ import (
 	"budgot/internal/configs"
 	"budgot/internal/ent"
 	"budgot/internal/ent/account"
+	"budgot/internal/ent/country"
 	"budgot/internal/ent/user"
 )
 
@@ -46,10 +47,12 @@ func (r *AccountRepository) FindByID(ctx context.Context, id int) (*ent.Account,
 	return a, configs.Translate(err)
 }
 
-func (r *AccountRepository) ListByOwner(ctx context.Context, ownerID int) ([]*ent.Account, error) {
+// for filtering accounts by owner and country, e.g. for dropdowns
+func (r *AccountRepository) ListByOwnerAndCountry(ctx context.Context, ownerID, countryID int) ([]*ent.Account, error) {
 	return r.client.Account.Query().
 		Where(
 			account.HasOwnerWith(user.IDEQ(ownerID)),
+			account.HasCountryWith(country.IDEQ(countryID)),
 			account.IsActiveEQ(true),
 		).
 		All(ctx)
