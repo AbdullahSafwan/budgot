@@ -21,5 +21,10 @@ func (Country) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("accounts", Account.Type).StorageKey(edge.Column("country_id")),
 		edge.To("budgets", Budget.Type).StorageKey(edge.Column("country_id")),
+		edge.To("transactions", Transaction.Type).StorageKey(edge.Column("country_id")),
+		// Suggested default for new accounts/budgets in this country; not enforced.
+		edge.To("default_currency", Currency.Type).
+			Unique().
+			StorageKey(edge.Column("default_currency_id")),
 	}
 }

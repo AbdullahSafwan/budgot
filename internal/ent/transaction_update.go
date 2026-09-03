@@ -5,6 +5,7 @@ package ent
 import (
 	"budgot/internal/ent/account"
 	"budgot/internal/ent/category"
+	"budgot/internal/ent/country"
 	"budgot/internal/ent/predicate"
 	"budgot/internal/ent/transaction"
 	"budgot/internal/ent/user"
@@ -139,6 +140,17 @@ func (_u *TransactionUpdate) SetCategory(v *Category) *TransactionUpdate {
 	return _u.SetCategoryID(v.ID)
 }
 
+// SetCountryID sets the "country" edge to the Country entity by ID.
+func (_u *TransactionUpdate) SetCountryID(id int) *TransactionUpdate {
+	_u.mutation.SetCountryID(id)
+	return _u
+}
+
+// SetCountry sets the "country" edge to the Country entity.
+func (_u *TransactionUpdate) SetCountry(v *Country) *TransactionUpdate {
+	return _u.SetCountryID(v.ID)
+}
+
 // Mutation returns the TransactionMutation object of the builder.
 func (_u *TransactionUpdate) Mutation() *TransactionMutation {
 	return _u.mutation
@@ -159,6 +171,12 @@ func (_u *TransactionUpdate) ClearAccount() *TransactionUpdate {
 // ClearCategory clears the "category" edge to the Category entity.
 func (_u *TransactionUpdate) ClearCategory() *TransactionUpdate {
 	_u.mutation.ClearCategory()
+	return _u
+}
+
+// ClearCountry clears the "country" edge to the Country entity.
+func (_u *TransactionUpdate) ClearCountry() *TransactionUpdate {
+	_u.mutation.ClearCountry()
 	return _u
 }
 
@@ -199,6 +217,9 @@ func (_u *TransactionUpdate) check() error {
 	}
 	if _u.mutation.CategoryCleared() && len(_u.mutation.CategoryIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Transaction.category"`)
+	}
+	if _u.mutation.CountryCleared() && len(_u.mutation.CountryIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Transaction.country"`)
 	}
 	return nil
 }
@@ -316,6 +337,35 @@ func (_u *TransactionUpdate) sqlSave(ctx context.Context) (_node int, err error)
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(category.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.CountryCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   transaction.CountryTable,
+			Columns: []string{transaction.CountryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(country.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.CountryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   transaction.CountryTable,
+			Columns: []string{transaction.CountryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(country.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -451,6 +501,17 @@ func (_u *TransactionUpdateOne) SetCategory(v *Category) *TransactionUpdateOne {
 	return _u.SetCategoryID(v.ID)
 }
 
+// SetCountryID sets the "country" edge to the Country entity by ID.
+func (_u *TransactionUpdateOne) SetCountryID(id int) *TransactionUpdateOne {
+	_u.mutation.SetCountryID(id)
+	return _u
+}
+
+// SetCountry sets the "country" edge to the Country entity.
+func (_u *TransactionUpdateOne) SetCountry(v *Country) *TransactionUpdateOne {
+	return _u.SetCountryID(v.ID)
+}
+
 // Mutation returns the TransactionMutation object of the builder.
 func (_u *TransactionUpdateOne) Mutation() *TransactionMutation {
 	return _u.mutation
@@ -471,6 +532,12 @@ func (_u *TransactionUpdateOne) ClearAccount() *TransactionUpdateOne {
 // ClearCategory clears the "category" edge to the Category entity.
 func (_u *TransactionUpdateOne) ClearCategory() *TransactionUpdateOne {
 	_u.mutation.ClearCategory()
+	return _u
+}
+
+// ClearCountry clears the "country" edge to the Country entity.
+func (_u *TransactionUpdateOne) ClearCountry() *TransactionUpdateOne {
+	_u.mutation.ClearCountry()
 	return _u
 }
 
@@ -524,6 +591,9 @@ func (_u *TransactionUpdateOne) check() error {
 	}
 	if _u.mutation.CategoryCleared() && len(_u.mutation.CategoryIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Transaction.category"`)
+	}
+	if _u.mutation.CountryCleared() && len(_u.mutation.CountryIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Transaction.country"`)
 	}
 	return nil
 }
@@ -658,6 +728,35 @@ func (_u *TransactionUpdateOne) sqlSave(ctx context.Context) (_node *Transaction
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(category.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.CountryCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   transaction.CountryTable,
+			Columns: []string{transaction.CountryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(country.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.CountryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   transaction.CountryTable,
+			Columns: []string{transaction.CountryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(country.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

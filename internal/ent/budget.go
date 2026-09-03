@@ -27,6 +27,8 @@ type Budget struct {
 	Year int `json:"year,omitempty"`
 	// Amount holds the value of the "amount" field.
 	Amount int64 `json:"amount,omitempty"`
+	// IsActive holds the value of the "is_active" field.
+	IsActive bool `json:"is_active,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -105,6 +107,8 @@ func (*Budget) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case budget.FieldIsActive:
+			values[i] = new(sql.NullBool)
 		case budget.FieldID, budget.FieldMonth, budget.FieldYear, budget.FieldAmount:
 			values[i] = new(sql.NullInt64)
 		case budget.FieldCreatedAt, budget.FieldUpdatedAt:
@@ -155,6 +159,12 @@ func (_m *Budget) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field amount", values[i])
 			} else if value.Valid {
 				_m.Amount = value.Int64
+			}
+		case budget.FieldIsActive:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_active", values[i])
+			} else if value.Valid {
+				_m.IsActive = value.Bool
 			}
 		case budget.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -260,6 +270,9 @@ func (_m *Budget) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("amount=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Amount))
+	builder.WriteString(", ")
+	builder.WriteString("is_active=")
+	builder.WriteString(fmt.Sprintf("%v", _m.IsActive))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

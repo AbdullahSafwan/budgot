@@ -28,6 +28,7 @@ func (Transaction) Edges() []ent.Edge {
 		edge.From("owner", User.Type).Ref("transactions").Unique().Required(),
 		edge.From("account", Account.Type).Ref("transactions").Unique().Required(),
 		edge.From("category", Category.Type).Ref("transactions").Unique().Required(),
+		edge.From("country", Country.Type).Ref("transactions").Unique().Required(),
 	}
 }
 
@@ -37,5 +38,6 @@ func (Transaction) Indexes() []ent.Index {
 		index.Edges("account"),
 		index.Edges("category"),
 		index.Fields("transfer_group"),
+		index.Edges("owner", "country"),
 	}
 }

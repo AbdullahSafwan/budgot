@@ -70,6 +70,11 @@ func Amount(v int64) predicate.Budget {
 	return predicate.Budget(sql.FieldEQ(FieldAmount, v))
 }
 
+// IsActive applies equality check predicate on the "is_active" field. It's identical to IsActiveEQ.
+func IsActive(v bool) predicate.Budget {
+	return predicate.Budget(sql.FieldEQ(FieldIsActive, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.Budget {
 	return predicate.Budget(sql.FieldEQ(FieldCreatedAt, v))
@@ -198,6 +203,16 @@ func AmountLT(v int64) predicate.Budget {
 // AmountLTE applies the LTE predicate on the "amount" field.
 func AmountLTE(v int64) predicate.Budget {
 	return predicate.Budget(sql.FieldLTE(FieldAmount, v))
+}
+
+// IsActiveEQ applies the EQ predicate on the "is_active" field.
+func IsActiveEQ(v bool) predicate.Budget {
+	return predicate.Budget(sql.FieldEQ(FieldIsActive, v))
+}
+
+// IsActiveNEQ applies the NEQ predicate on the "is_active" field.
+func IsActiveNEQ(v bool) predicate.Budget {
+	return predicate.Budget(sql.FieldNEQ(FieldIsActive, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.

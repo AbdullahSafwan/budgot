@@ -4,6 +4,7 @@ package ent
 
 import (
 	"budgot/internal/ent/country"
+	"budgot/internal/ent/currency"
 	"fmt"
 	"strings"
 
@@ -22,8 +23,9 @@ type Country struct {
 	Name string `json:"name,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the CountryQuery when eager-loading is set.
-	Edges        CountryEdges `json:"edges"`
-	selectValues sql.SelectValues
+	Edges               CountryEdges `json:"edges"`
+	default_currency_id *int
+	selectValues        sql.SelectValues
 }
 
 // CountryEdges holds the relations/edges for other nodes in the graph.
@@ -32,9 +34,13 @@ type CountryEdges struct {
 	Accounts []*Account `json:"accounts,omitempty"`
 	// Budgets holds the value of the budgets edge.
 	Budgets []*Budget `json:"budgets,omitempty"`
+	// Transactions holds the value of the transactions edge.
+	Transactions []*Transaction `json:"transactions,omitempty"`
+	// DefaultCurrency holds the value of the default_currency edge.
+	DefaultCurrency *Currency `json:"default_currency,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [4]bool
 }
 
 // AccountsOrErr returns the Accounts value or an error if the edge
@@ -55,6 +61,26 @@ func (e CountryEdges) BudgetsOrErr() ([]*Budget, error) {
 	return nil, &NotLoadedError{edge: "budgets"}
 }
 
+// TransactionsOrErr returns the Transactions value or an error if the edge
+// was not loaded in eager-loading.
+func (e CountryEdges) TransactionsOrErr() ([]*Transaction, error) {
+	if e.loadedTypes[2] {
+		return e.Transactions, nil
+	}
+	return nil, &NotLoadedError{edge: "transactions"}
+}
+
+// DefaultCurrencyOrErr returns the DefaultCurrency value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e CountryEdges) DefaultCurrencyOrErr() (*Currency, error) {
+	if e.DefaultCurrency != nil {
+		return e.DefaultCurrency, nil
+	} else if e.loadedTypes[3] {
+		return nil, &NotFoundError{label: currency.Label}
+	}
+	return nil, &NotLoadedError{edge: "default_currency"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Country) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -64,6 +90,8 @@ func (*Country) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case country.FieldCode, country.FieldName:
 			values[i] = new(sql.NullString)
+		case country.ForeignKeys[0]: // default_currency_id
+			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -97,6 +125,13 @@ func (_m *Country) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Name = value.String
 			}
+		case country.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field default_currency_id", value)
+			} else if value.Valid {
+				_m.default_currency_id = new(int)
+				*_m.default_currency_id = int(value.Int64)
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -118,6 +153,16 @@ func (_m *Country) QueryAccounts() *AccountQuery {
 // QueryBudgets queries the "budgets" edge of the Country entity.
 func (_m *Country) QueryBudgets() *BudgetQuery {
 	return NewCountryClient(_m.config).QueryBudgets(_m)
+}
+
+// QueryTransactions queries the "transactions" edge of the Country entity.
+func (_m *Country) QueryTransactions() *TransactionQuery {
+	return NewCountryClient(_m.config).QueryTransactions(_m)
+}
+
+// QueryDefaultCurrency queries the "default_currency" edge of the Country entity.
+func (_m *Country) QueryDefaultCurrency() *CurrencyQuery {
+	return NewCountryClient(_m.config).QueryDefaultCurrency(_m)
 }
 
 // Update returns a builder for updating this Country.

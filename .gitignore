@@ -1,8 +1,10 @@
 # Compiled binary
 /budgot
 
-# SQLite database
+# SQLite database (plus WAL sidecar files)
 budgot.db
+budgot.db-wal
+budgot.db-shm
 
 # Local env / secrets
 .env

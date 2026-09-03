@@ -20,6 +20,10 @@ const (
 	EdgeAccounts = "accounts"
 	// EdgeBudgets holds the string denoting the budgets edge name in mutations.
 	EdgeBudgets = "budgets"
+	// EdgeTransactions holds the string denoting the transactions edge name in mutations.
+	EdgeTransactions = "transactions"
+	// EdgeDefaultCurrency holds the string denoting the default_currency edge name in mutations.
+	EdgeDefaultCurrency = "default_currency"
 	// Table holds the table name of the country in the database.
 	Table = "countries"
 	// AccountsTable is the table that holds the accounts relation/edge.
@@ -36,6 +40,20 @@ const (
 	BudgetsInverseTable = "budgets"
 	// BudgetsColumn is the table column denoting the budgets relation/edge.
 	BudgetsColumn = "country_id"
+	// TransactionsTable is the table that holds the transactions relation/edge.
+	TransactionsTable = "transactions"
+	// TransactionsInverseTable is the table name for the Transaction entity.
+	// It exists in this package in order to avoid circular dependency with the "transaction" package.
+	TransactionsInverseTable = "transactions"
+	// TransactionsColumn is the table column denoting the transactions relation/edge.
+	TransactionsColumn = "country_id"
+	// DefaultCurrencyTable is the table that holds the default_currency relation/edge.
+	DefaultCurrencyTable = "countries"
+	// DefaultCurrencyInverseTable is the table name for the Currency entity.
+	// It exists in this package in order to avoid circular dependency with the "currency" package.
+	DefaultCurrencyInverseTable = "currencies"
+	// DefaultCurrencyColumn is the table column denoting the default_currency relation/edge.
+	DefaultCurrencyColumn = "default_currency_id"
 )
 
 // Columns holds all SQL columns for country fields.
@@ -45,10 +63,21 @@ var Columns = []string{
 	FieldName,
 }
 
+// ForeignKeys holds the SQL foreign-keys that are owned by the "countries"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"default_currency_id",
+}
+
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -107,6 +136,27 @@ func ByBudgets(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newBudgetsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByTransactionsCount orders the results by transactions count.
+func ByTransactionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newTransactionsStep(), opts...)
+	}
+}
+
+// ByTransactions orders the results by transactions terms.
+func ByTransactions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTransactionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByDefaultCurrencyField orders the results by default_currency field.
+func ByDefaultCurrencyField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newDefaultCurrencyStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newAccountsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -119,5 +169,19 @@ func newBudgetsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(BudgetsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, BudgetsTable, BudgetsColumn),
+	)
+}
+func newTransactionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TransactionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, TransactionsTable, TransactionsColumn),
+	)
+}
+func newDefaultCurrencyStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(DefaultCurrencyInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, DefaultCurrencyTable, DefaultCurrencyColumn),
 	)
 }

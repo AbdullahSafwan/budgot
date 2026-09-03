@@ -3,8 +3,10 @@ package repository
 import (
 	"context"
 
+	"budgot/internal/configs"
 	"budgot/internal/ent"
 	"budgot/internal/ent/account"
+	"budgot/internal/ent/country"
 	"budgot/internal/ent/user"
 )
 
@@ -16,7 +18,7 @@ func NewAccountRepository(client *ent.Client) *AccountRepository {
 	return &AccountRepository{client: client}
 }
 
-// WithTx returns a copy of// WithTx returns a copy of the repository bound to the given transaction, so its
+// WithTx binds the repository to an existing transaction.
 func (r *AccountRepository) WithTx(tx *ent.Tx) *AccountRepository {
 	return &AccountRepository{client: tx.Client()}
 }
@@ -30,21 +32,48 @@ type CreateAccountParams struct {
 }
 
 func (r *AccountRepository) Create(ctx context.Context, params CreateAccountParams) (*ent.Account, error) {
-	return r.client.Account.Create().
+	a, err := r.client.Account.Create().
 		SetOwnerID(params.OwnerID).
 		SetCountryID(params.CountryID).
 		SetCurrencyID(params.CurrencyID).
 		SetName(params.Name).
 		SetAccountType(params.AccountType).
 		Save(ctx)
+	return a, configs.Translate(err)
 }
 
-func (r *AccountRepository) FindByID(ctx context.Context, id int) (*ent.Account, error) {
-	return r.client.Account.Query().Where(account.IDEQ(id)).Only(ctx)
+func (r *AccountRepository) FindByID(ctx context.Context, ownerID, id int) (*ent.Account, error) {
+	a, err := r.client.Account.Query().
+		Where(account.IDEQ(id), account.HasOwnerWith(user.IDEQ(ownerID))).
+		Only(ctx)
+	return a, configs.Translate(err)
 }
 
-func (r *AccountRepository) ListByOwner(ctx context.Context, ownerID int) ([]*ent.Account, error) {
-	return r.client.Account.Query().
-		Where(account.HasOwnerWith(user.IDEQ(ownerID))).
-		All(ctx)
+type ListAccountsParams struct {
+	OwnerID       int
+	CountryID     int
+	WithEdges     bool
+	Limit, Offset int
+}
+
+func (r *AccountRepository) List(ctx context.Context, p ListAccountsParams) ([]*ent.Account, error) {
+	q := r.client.Account.Query().
+		Where(
+			account.HasOwnerWith(user.IDEQ(p.OwnerID)),
+			account.HasCountryWith(country.IDEQ(p.CountryID)),
+			account.IsActiveEQ(true),
+		).
+		Order(ent.Asc(account.FieldName)).
+		Limit(listLimit(p.Limit)).
+		Offset(p.Offset)
+	if p.WithEdges {
+		q = q.WithCountry().WithCurrency()
+	}
+	return q.All(ctx)
+}
+
+// Delete soft-deletes an account; rows are never hard-deleted.
+func (r *AccountRepository) Delete(ctx context.Context, id int) error {
+	_, err := r.client.Account.UpdateOneID(id).SetIsActive(false).Save(ctx)
+	return configs.Translate(err)
 }

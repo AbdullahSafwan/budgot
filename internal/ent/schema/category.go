@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
@@ -32,6 +33,8 @@ func (Category) Edges() []ent.Edge {
 
 func (Category) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("name").Edges("owner").Unique(),
+		// Partial index: only active categories are checked for uniqueness.
+		index.Fields("name").Edges("owner").Unique().
+			Annotations(entsql.IndexWhere("is_active")),
 	}
 }

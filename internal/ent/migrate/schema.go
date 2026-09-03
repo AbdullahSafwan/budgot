@@ -3,6 +3,7 @@
 package migrate
 
 import (
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/dialect/sql/schema"
 	"entgo.io/ent/schema/field"
 )
@@ -52,6 +53,7 @@ var (
 		{Name: "month", Type: field.TypeInt},
 		{Name: "year", Type: field.TypeInt},
 		{Name: "amount", Type: field.TypeInt64},
+		{Name: "is_active", Type: field.TypeBool, Default: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "category_id", Type: field.TypeInt},
@@ -67,25 +69,25 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "budgets_categories_budgets",
-				Columns:    []*schema.Column{BudgetsColumns[6]},
+				Columns:    []*schema.Column{BudgetsColumns[7]},
 				RefColumns: []*schema.Column{CategoriesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "budgets_countries_budgets",
-				Columns:    []*schema.Column{BudgetsColumns[7]},
+				Columns:    []*schema.Column{BudgetsColumns[8]},
 				RefColumns: []*schema.Column{CountriesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "budgets_currencies_budgets",
-				Columns:    []*schema.Column{BudgetsColumns[8]},
+				Columns:    []*schema.Column{BudgetsColumns[9]},
 				RefColumns: []*schema.Column{CurrenciesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "budgets_users_budgets",
-				Columns:    []*schema.Column{BudgetsColumns[9]},
+				Columns:    []*schema.Column{BudgetsColumns[10]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -94,7 +96,7 @@ var (
 			{
 				Name:    "budget_month_year_user_id_category_id_country_id_currency_id",
 				Unique:  true,
-				Columns: []*schema.Column{BudgetsColumns[1], BudgetsColumns[2], BudgetsColumns[9], BudgetsColumns[6], BudgetsColumns[7], BudgetsColumns[8]},
+				Columns: []*schema.Column{BudgetsColumns[1], BudgetsColumns[2], BudgetsColumns[10], BudgetsColumns[7], BudgetsColumns[8], BudgetsColumns[9]},
 			},
 		},
 	}
@@ -125,6 +127,9 @@ var (
 				Name:    "category_name_user_id",
 				Unique:  true,
 				Columns: []*schema.Column{CategoriesColumns[1], CategoriesColumns[5]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "is_active",
+				},
 			},
 		},
 	}
@@ -133,12 +138,21 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "code", Type: field.TypeString, Unique: true},
 		{Name: "name", Type: field.TypeString},
+		{Name: "default_currency_id", Type: field.TypeInt, Nullable: true},
 	}
 	// CountriesTable holds the schema information for the "countries" table.
 	CountriesTable = &schema.Table{
 		Name:       "countries",
 		Columns:    CountriesColumns,
 		PrimaryKey: []*schema.Column{CountriesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "countries_currencies_default_currency",
+				Columns:    []*schema.Column{CountriesColumns[3]},
+				RefColumns: []*schema.Column{CurrenciesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// CurrenciesColumns holds the columns for the "currencies" table.
 	CurrenciesColumns = []*schema.Column{
@@ -202,6 +216,7 @@ var (
 		{Name: "transfer_group", Type: field.TypeString, Nullable: true},
 		{Name: "account_id", Type: field.TypeInt},
 		{Name: "category_id", Type: field.TypeInt},
+		{Name: "country_id", Type: field.TypeInt},
 		{Name: "user_id", Type: field.TypeInt},
 	}
 	// TransactionsTable holds the schema information for the "transactions" table.
@@ -223,8 +238,14 @@ var (
 				OnDelete:   schema.NoAction,
 			},
 			{
-				Symbol:     "transactions_users_transactions",
+				Symbol:     "transactions_countries_transactions",
 				Columns:    []*schema.Column{TransactionsColumns[8]},
+				RefColumns: []*schema.Column{CountriesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "transactions_users_transactions",
+				Columns:    []*schema.Column{TransactionsColumns[9]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -233,7 +254,7 @@ var (
 			{
 				Name:    "transaction_user_id",
 				Unique:  false,
-				Columns: []*schema.Column{TransactionsColumns[8]},
+				Columns: []*schema.Column{TransactionsColumns[9]},
 			},
 			{
 				Name:    "transaction_account_id",
@@ -249,6 +270,11 @@ var (
 				Name:    "transaction_transfer_group",
 				Unique:  false,
 				Columns: []*schema.Column{TransactionsColumns[5]},
+			},
+			{
+				Name:    "transaction_user_id_country_id",
+				Unique:  false,
+				Columns: []*schema.Column{TransactionsColumns[9], TransactionsColumns[8]},
 			},
 		},
 	}
@@ -291,8 +317,10 @@ func init() {
 	BudgetsTable.ForeignKeys[2].RefTable = CurrenciesTable
 	BudgetsTable.ForeignKeys[3].RefTable = UsersTable
 	CategoriesTable.ForeignKeys[0].RefTable = UsersTable
+	CountriesTable.ForeignKeys[0].RefTable = CurrenciesTable
 	SessionsTable.ForeignKeys[0].RefTable = UsersTable
 	TransactionsTable.ForeignKeys[0].RefTable = AccountsTable
 	TransactionsTable.ForeignKeys[1].RefTable = CategoriesTable
-	TransactionsTable.ForeignKeys[2].RefTable = UsersTable
+	TransactionsTable.ForeignKeys[2].RefTable = CountriesTable
+	TransactionsTable.ForeignKeys[3].RefTable = UsersTable
 }

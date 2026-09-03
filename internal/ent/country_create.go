@@ -6,6 +6,8 @@ import (
 	"budgot/internal/ent/account"
 	"budgot/internal/ent/budget"
 	"budgot/internal/ent/country"
+	"budgot/internal/ent/currency"
+	"budgot/internal/ent/transaction"
 	"context"
 	"errors"
 	"fmt"
@@ -61,6 +63,40 @@ func (_c *CountryCreate) AddBudgets(v ...*Budget) *CountryCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddBudgetIDs(ids...)
+}
+
+// AddTransactionIDs adds the "transactions" edge to the Transaction entity by IDs.
+func (_c *CountryCreate) AddTransactionIDs(ids ...int) *CountryCreate {
+	_c.mutation.AddTransactionIDs(ids...)
+	return _c
+}
+
+// AddTransactions adds the "transactions" edges to the Transaction entity.
+func (_c *CountryCreate) AddTransactions(v ...*Transaction) *CountryCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddTransactionIDs(ids...)
+}
+
+// SetDefaultCurrencyID sets the "default_currency" edge to the Currency entity by ID.
+func (_c *CountryCreate) SetDefaultCurrencyID(id int) *CountryCreate {
+	_c.mutation.SetDefaultCurrencyID(id)
+	return _c
+}
+
+// SetNillableDefaultCurrencyID sets the "default_currency" edge to the Currency entity by ID if the given value is not nil.
+func (_c *CountryCreate) SetNillableDefaultCurrencyID(id *int) *CountryCreate {
+	if id != nil {
+		_c = _c.SetDefaultCurrencyID(*id)
+	}
+	return _c
+}
+
+// SetDefaultCurrency sets the "default_currency" edge to the Currency entity.
+func (_c *CountryCreate) SetDefaultCurrency(v *Currency) *CountryCreate {
+	return _c.SetDefaultCurrencyID(v.ID)
 }
 
 // Mutation returns the CountryMutation object of the builder.
@@ -177,6 +213,39 @@ func (_c *CountryCreate) createSpec() (*Country, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.TransactionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   country.TransactionsTable,
+			Columns: []string{country.TransactionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(transaction.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.DefaultCurrencyIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   country.DefaultCurrencyTable,
+			Columns: []string{country.DefaultCurrencyColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(currency.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.default_currency_id = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
