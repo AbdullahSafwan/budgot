@@ -42,20 +42,34 @@ func (r *AccountRepository) Create(ctx context.Context, params CreateAccountPara
 	return a, configs.Translate(err)
 }
 
-func (r *AccountRepository) FindByID(ctx context.Context, id int) (*ent.Account, error) {
-	a, err := r.client.Account.Query().Where(account.IDEQ(id)).Only(ctx)
+func (r *AccountRepository) FindByID(ctx context.Context, ownerID, id int) (*ent.Account, error) {
+	a, err := r.client.Account.Query().
+		Where(account.IDEQ(id), account.HasOwnerWith(user.IDEQ(ownerID))).
+		Only(ctx)
 	return a, configs.Translate(err)
 }
 
-// for filtering accounts by owner and country, e.g. for dropdowns
-func (r *AccountRepository) ListByOwnerAndCountry(ctx context.Context, ownerID, countryID int) ([]*ent.Account, error) {
-	return r.client.Account.Query().
+type ListAccountsParams struct {
+	OwnerID       int
+	CountryID     int
+	WithEdges     bool
+	Limit, Offset int
+}
+
+func (r *AccountRepository) List(ctx context.Context, p ListAccountsParams) ([]*ent.Account, error) {
+	q := r.client.Account.Query().
 		Where(
-			account.HasOwnerWith(user.IDEQ(ownerID)),
-			account.HasCountryWith(country.IDEQ(countryID)),
+			account.HasOwnerWith(user.IDEQ(p.OwnerID)),
+			account.HasCountryWith(country.IDEQ(p.CountryID)),
 			account.IsActiveEQ(true),
 		).
-		All(ctx)
+		Order(ent.Asc(account.FieldName)).
+		Limit(listLimit(p.Limit)).
+		Offset(p.Offset)
+	if p.WithEdges {
+		q = q.WithCountry().WithCurrency()
+	}
+	return q.All(ctx)
 }
 
 // Delete soft-deletes an account; rows are never hard-deleted.

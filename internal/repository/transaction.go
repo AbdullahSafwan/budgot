@@ -10,6 +10,7 @@ import (
 	"budgot/internal/ent/category"
 	"budgot/internal/ent/country"
 	"budgot/internal/ent/currency"
+	"budgot/internal/ent/predicate"
 	"budgot/internal/ent/transaction"
 	"budgot/internal/ent/user"
 )
@@ -54,24 +55,50 @@ func (r *TransactionRepository) Create(ctx context.Context, params CreateTransac
 	return t, configs.Translate(err)
 }
 
-func (r *TransactionRepository) FindByID(ctx context.Context, id int) (*ent.Transaction, error) {
-	t, err := r.client.Transaction.Query().Where(transaction.IDEQ(id)).Only(ctx)
+func (r *TransactionRepository) FindByID(ctx context.Context, ownerID, id int) (*ent.Transaction, error) {
+	t, err := r.client.Transaction.Query().
+		Where(transaction.IDEQ(id), transaction.HasOwnerWith(user.IDEQ(ownerID))).
+		Only(ctx)
 	return t, configs.Translate(err)
 }
 
-func (r *TransactionRepository) ListByAccount(ctx context.Context, accountID int) ([]*ent.Transaction, error) {
-	return r.client.Transaction.Query().
-		Where(transaction.HasAccountWith(account.IDEQ(accountID))).
-		All(ctx)
+type ListTransactionsParams struct {
+	OwnerID       int
+	CountryID     int
+	AccountID     *int
+	CategoryID    *int
+	From, To      *time.Time
+	WithEdges     bool
+	Limit, Offset int
 }
 
-func (r *TransactionRepository) ListByOwnerAndCountry(ctx context.Context, ownerID, countryID int) ([]*ent.Transaction, error) {
-	return r.client.Transaction.Query().
-		Where(
-			transaction.HasOwnerWith(user.IDEQ(ownerID)),
-			transaction.HasCountryWith(country.IDEQ(countryID)),
-		).
-		All(ctx)
+func (r *TransactionRepository) List(ctx context.Context, p ListTransactionsParams) ([]*ent.Transaction, error) {
+	preds := []predicate.Transaction{
+		transaction.HasOwnerWith(user.IDEQ(p.OwnerID)),
+		transaction.HasCountryWith(country.IDEQ(p.CountryID)),
+	}
+	if p.AccountID != nil {
+		preds = append(preds, transaction.HasAccountWith(account.IDEQ(*p.AccountID)))
+	}
+	if p.CategoryID != nil {
+		preds = append(preds, transaction.HasCategoryWith(category.IDEQ(*p.CategoryID)))
+	}
+	if p.From != nil {
+		preds = append(preds, transaction.TransactionDateGTE(*p.From))
+	}
+	if p.To != nil {
+		preds = append(preds, transaction.TransactionDateLT(*p.To))
+	}
+
+	q := r.client.Transaction.Query().
+		Where(preds...).
+		Order(ent.Desc(transaction.FieldTransactionDate)).
+		Limit(listLimit(p.Limit)).
+		Offset(p.Offset)
+	if p.WithEdges {
+		q = q.WithAccount().WithCategory()
+	}
+	return q.All(ctx)
 }
 
 // SetTransferGroup links a transaction to another as one leg of a transfer.
@@ -103,9 +130,17 @@ func (r *TransactionRepository) SumByAccount(ctx context.Context, accountID int)
 	return *result[0].Total, nil
 }
 
-// sums trx for a category per month/year, filtered by country and currency of the account
-func (r *TransactionRepository) SumByCategoryAndPeriod(ctx context.Context, categoryID, countryID, currencyID, month, year int) (int64, error) {
-	start := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
+type SumByCategoryAndPeriodParams struct {
+	CategoryID int
+	CountryID  int
+	CurrencyID int
+	Month      int
+	Year       int
+}
+
+// SumByCategoryAndPeriod sums a category's transactions for one month, filtered by country and currency.
+func (r *TransactionRepository) SumByCategoryAndPeriod(ctx context.Context, p SumByCategoryAndPeriodParams) (int64, error) {
+	start := time.Date(p.Year, time.Month(p.Month), 1, 0, 0, 0, 0, time.UTC)
 	end := start.AddDate(0, 1, 0)
 
 	var result []struct {
@@ -113,9 +148,9 @@ func (r *TransactionRepository) SumByCategoryAndPeriod(ctx context.Context, cate
 	}
 	err := r.client.Transaction.Query().
 		Where(
-			transaction.HasCategoryWith(category.IDEQ(categoryID)),
-			transaction.HasCountryWith(country.IDEQ(countryID)),
-			transaction.HasAccountWith(account.HasCurrencyWith(currency.IDEQ(currencyID))),
+			transaction.HasCategoryWith(category.IDEQ(p.CategoryID)),
+			transaction.HasCountryWith(country.IDEQ(p.CountryID)),
+			transaction.HasAccountWith(account.HasCurrencyWith(currency.IDEQ(p.CurrencyID))),
 			transaction.TransactionDateGTE(start),
 			transaction.TransactionDateLT(end),
 		).

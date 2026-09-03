@@ -6,6 +6,7 @@ import (
 	"budgot/internal/configs"
 	"budgot/internal/ent"
 	"budgot/internal/ent/category"
+	"budgot/internal/ent/predicate"
 	"budgot/internal/ent/user"
 )
 
@@ -39,17 +40,34 @@ func (r *CategoryRepository) Create(ctx context.Context, params CreateCategoryPa
 	return c, configs.Translate(err)
 }
 
-func (r *CategoryRepository) FindByID(ctx context.Context, id int) (*ent.Category, error) {
-	c, err := r.client.Category.Query().Where(category.IDEQ(id)).Only(ctx)
+func (r *CategoryRepository) FindByID(ctx context.Context, ownerID, id int) (*ent.Category, error) {
+	c, err := r.client.Category.Query().
+		Where(category.IDEQ(id), category.HasOwnerWith(user.IDEQ(ownerID))).
+		Only(ctx)
 	return c, configs.Translate(err)
 }
 
-func (r *CategoryRepository) ListByOwner(ctx context.Context, ownerID int) ([]*ent.Category, error) {
+type ListCategoriesParams struct {
+	OwnerID       int
+	Type          *category.Type
+	Limit, Offset int
+}
+
+// List is not country-scoped: categories are deliberately shared across countries.
+func (r *CategoryRepository) List(ctx context.Context, p ListCategoriesParams) ([]*ent.Category, error) {
+	preds := []predicate.Category{
+		category.HasOwnerWith(user.IDEQ(p.OwnerID)),
+		category.IsActiveEQ(true),
+	}
+	if p.Type != nil {
+		preds = append(preds, category.TypeEQ(*p.Type))
+	}
+
 	return r.client.Category.Query().
-		Where(
-			category.HasOwnerWith(user.IDEQ(ownerID)),
-			category.IsActiveEQ(true),
-		).
+		Where(preds...).
+		Order(ent.Asc(category.FieldName)).
+		Limit(listLimit(p.Limit)).
+		Offset(p.Offset).
 		All(ctx)
 }
 
